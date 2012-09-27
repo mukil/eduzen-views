@@ -1,0 +1,30 @@
+.eduzen #header {
+    padding-top: 30px;
+    height: 100%;
+}
+
+.eduzen label {
+    font-size: 11px;
+    color: #a8a8a8;
+    margin-bottom: 4px;
+}
+
+.eduzen .account {
+    text-decoration: none;
+    border: 1px solid #12b4d7;
+    color: #000;
+    padding: 4px;
+    margin: 4px;
+}
+
+.eduzen .button {
+    font-size: 15px;
+    height: 30px;
+}
+
+.eduzen .pwdfield {
+    height: 30px;
+    margin-left: 0px; margin-right: 0px;
+    margin-bottom: 10px; margin-top: 0px;
+}
+
