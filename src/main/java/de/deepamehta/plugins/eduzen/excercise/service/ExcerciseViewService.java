@@ -13,4 +13,10 @@ public interface ExcerciseViewService extends PluginService {
 
     InputStream getUserView(long userId, ClientState clientState);
 
+    InputStream getLectureView(long lectureId, ClientState clientState);
+
+    InputStream getLecturesView(ClientState clientState);
+
+    InputStream getLectureTopicalareaView(long lectureId, long topicalareaId, ClientState clientState);
+
 }

@@ -14,11 +14,15 @@ var uView = new function () {
 
   /** excercise View application controler **/
 
-  this.initSearchView = function () { 
+  this.initView = function () { 
     uView.user = uView.getCurrentUser()
-    uView.renderUsername()
-    uView.loadUserAccount()
-    uView.renderUserAccount()
+    if (uView.user != undefined) {
+      uView.renderUsername()
+      uView.loadUserAccount()
+      uView.renderUserAccount()
+    } else {
+      uView.renderLogin()
+    }
     // registering handler
     /** $("[name=search]").submit(uView.doSearch)
     window.addEventListener("popstate", function(e) {
@@ -51,6 +55,20 @@ var uView = new function () {
     $(".edit.button").click(uView.pwdHandler)
     // $(".mailedit.button").click(uView.mailHandler)
     $(".pwdsave.button").hide()
+  }
+
+  this.renderLogin = function () {
+    var html = "Authentifizierung ben&ouml;tigt <span class=\"authenticate\">Login</span></a>"
+      html += "<p><br/></p>"
+      html += "<form id=\"user-form\" name=\"search\" action=\"javascript:uView.loginHandler()\">"
+        + "  <label for=\"namefield\">Your username</label>"
+        + "  <input name=\"namefield\" class=\"pwdfield\" type=\"text\" placeholder=\"Username\"></input><br/>"
+        + "  <label for=\"pwdfield\">Your password</label>"
+        + "  <input name=\"pwdfield\" class=\"pwdfield\" type=\"password\" placeholder=\"Password\"></input><br/><br/>"
+        + "  <span class=\"login button\"><a href=\"#login\" title=\"do login\">Login</a></span>"
+        + "</form>"
+    $(".title").html(html)
+    $(".login.button").click(uView.loginHandler)
   }
 
   this.renderUserAccount = function() {
@@ -119,7 +137,7 @@ var uView = new function () {
   /** The uViews RESTClient-methods **/
 
   this.loadUserAccount = function () {
-    uView.userAccount = dmc.get_related_topics(uView.user.id, 
+    uView.userAccount = dmc.get_topic_related_topics(uView.user.id, 
       {"others_topic_type_uri": "dm4.accesscontrol.user_account"}
     )
     uView.userAccount = dmc.get_topic_by_id(uView.userAccount.items[0].id)
@@ -129,14 +147,22 @@ var uView = new function () {
     return dmc.request("GET", "/accesscontrol/user", undefined, undefined, undefined, false)
   }
 
+  this.loginHandler = function(e) {
+    var username = $("[name=namefield]").val()
+    var password = $("[name=pwdfield]").val()
+    console.log("login debug")
+    console.log(username)
+    console.log(password)
+    var authorization = { 'username': username, 'password': password }
+    uView.login(authorization)
+  }
+
   this.login = function(authorization) {
-
-    var DEFAULT_USER = "admin"
-    var DEFAULT_PASSWORD = ""
+    if (authorization == undefined) return null
     var ENCRYPTED_PASSWORD_PREFIX = "-SHA256-" // don't change this
-    var pwd = ENCRYPTED_PASSWORD_PREFIX + SHA256(DEFAULT_PASSWORD)
-    var credentials = "admin:" + pwd
-
+    var pwd = ENCRYPTED_PASSWORD_PREFIX + SHA256(authorization.password)
+    var credentials = authorization.username + ":" + pwd
+    console.log("logging in with " + credentials)
     return dmc.request("POST", "/accesscontrol/login", undefined, {"Authorization": "Basic "+ btoa(credentials)})
   }
 
@@ -147,4 +173,4 @@ var uView = new function () {
 
 }
 
-$(window).load(uView.initSearchView)
+$(window).load(uView.initView)
