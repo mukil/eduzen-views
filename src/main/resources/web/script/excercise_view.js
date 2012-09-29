@@ -2,7 +2,10 @@
  * A prototype to list contents of a Lehrveranstaltung and Excercises.
  **/
 
-var dmc = new RESTClient("http://localhost:8080/core")
+var host = "http://localhost:8080"
+var serviceURL = "/core"
+var authorClientURL = "/de.deepamehta.webclient"
+var dmc = new RESTClient(host + serviceURL)
 var dict = new eduzenDictionary("DE")
 
 var eView = new function () {
@@ -20,9 +23,6 @@ var eView = new function () {
 
   this.initViews = function () { 
     eView.user = eView.getCurrentUser()
-    if (eView.user == undefined) {
-      // ### FIXME uView.renderLogin()
-    }
     // todo: registering handler
     // handling deep links
     var entryUrl = window.location.href
@@ -67,8 +67,14 @@ var eView = new function () {
   }
 
   this.renderUser = function () {
-    $(".title").html("Hi <a href=\"/eduzen/view/user/" + eView.user.id + "\" class=\"username\"> "
-      + eView.user.value + "</a>!<p><br/></p>")
+    if (eView.user == undefined) {
+      // ### FIXME uView.renderLogin()
+      $(".title").html("Bitte nutzen Sie zum einloggen vorerst die <a href=\"" 
+        + host + authorClientURL + "\">Autorenoberfl&auml;che</a> und laden danach diese Seite erneut.")
+    } else {
+      $(".title").html("Hi <a href=\"/eduzen/view/user/" + eView.user.id + "\" class=\"username\"> "
+        + eView.user.value + "</a>!<p><br/></p>")
+    }
   }
 
   this.renderLecture = function () {

@@ -2,7 +2,10 @@
  * A prototype to list contents of a Lehrveranstaltung and Excercises.
  **/
 
-var dmc = new RESTClient("http://localhost:8080/core")
+var host = "http://localhost:8080"
+var serviceURL = "/core"
+var authorClientURL = "/de.deepamehta.webclient"
+var dmc = new RESTClient(host + serviceURL)
 var dict = new eduzenDictionary("DE")
 
 var uView = new function () {
