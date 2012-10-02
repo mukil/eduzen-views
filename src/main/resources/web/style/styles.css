@@ -18,6 +18,16 @@
     line-height: 1.6em;
 }
 
+.eduzen ol.excercise_texts li.excercise {
+    display: block;
+    border: 1px solid #1072c8;
+    list-style-type: decimal;
+}
+
+.eduzen .take.button {
+    margin-left: 25px;
+}
+
 .eduzen li.excercise {
     padding-left: 20px;
 }
@@ -27,7 +37,7 @@
 }
 
 .eduzen #result-list {
-  float: none;
+    float: none;
 }
 
 .eduzen #content p {
@@ -37,6 +47,7 @@
 .eduzen #content p.buffer {
     padding: 30px;
     width: 100%;
+    font-weight: bold;
 }
 
 .eduzen .topicalareaname {

@@ -59,7 +59,8 @@ public class ExcerciseViewPlugin extends PluginActivator implements ExcerciseVie
     @Path("/lecture/{lectureId}")
     @Produces("text/html")
     @Override
-    public InputStream getLectureView(@PathParam("lectureId") long lectureId, @HeaderParam("Cookie") ClientState clientState) {
+    public InputStream getLectureView(@PathParam("lectureId") long lectureId, 
+        @HeaderParam("Cookie") ClientState clientState) {
         logger.info("loading eduzen lecture-view for lecture: " + lectureId);
         /** @PathParam("viewId") String viewId, @PathParam("typeId") String typeId, 
         @PathParam("topicId") String topicId,  **/
@@ -73,9 +74,28 @@ public class ExcerciseViewPlugin extends PluginActivator implements ExcerciseVie
     public InputStream getLectureTopicalareaView(@PathParam("lectureId") long lectureId, 
         @PathParam("topicalareaId") long topicalareaId, @HeaderParam("Cookie") ClientState clientState) {
         logger.info("loading eduzen lecture-view for lecture: " + lectureId + " and/ topicalarea " + topicalareaId);
-        /** @PathParam("viewId") String viewId, @PathParam("typeId") String typeId, 
-        @PathParam("topicId") String topicId,  **/
         return invokeStartView();
+    }
+
+    @GET
+    @Path("/topicalarea/{topicalareaId}")
+    @Produces("text/html")
+    @Override
+    public InputStream getTopicalareaView(@PathParam("topicalareaId") long topicalareaId, 
+        @HeaderParam("Cookie") ClientState clientState) {
+        logger.info("loading eduzen topicalarea-view for topicalarea: " + topicalareaId);
+        return invokeApproachView();
+    }
+
+    @GET
+    @Path("/topicalarea/{topicalareaId}/etext/{excerciseTextId}")
+    @Produces("text/html")
+    @Override
+    public InputStream getTopicalareaExcerciseView(@PathParam("topicalareaId") long topicalareaId, 
+        @PathParam("excerciseTextId") long excerciseTextId, @HeaderParam("Cookie") ClientState clientState) {
+        logger.info("loading eduzen topicalarea-view for topicalarea: " + topicalareaId
+          + " and/ excercise " + excerciseTextId);
+        return invokeApproachView();
     }
 
     @GET
@@ -83,10 +103,8 @@ public class ExcerciseViewPlugin extends PluginActivator implements ExcerciseVie
     @Produces("text/html")
     @Override
     public InputStream getLecturesView(@HeaderParam("Cookie") ClientState clientState) {
-        logger.info("loading eduzen lectures-view .. ");
-        /** @PathParam("viewId") String viewId, @PathParam("typeId") String typeId, 
-        @PathParam("topicId") String topicId,  **/
-        return invokeUserView();
+        logger.info("loading eduzen lectures-view .. NOT YET IMPLEMENTED");
+        return invokeApproachView();
     }
 
     // ------------------------------------------------------------------------------------------------ Private Methods
@@ -102,6 +120,14 @@ public class ExcerciseViewPlugin extends PluginActivator implements ExcerciseVie
     private InputStream invokeUserView() {
         try {
             return dms.getPlugin("de.tu-berlin.eduzen.task-views").getResourceAsStream("web/user.html");
+        } catch (Exception e) {
+            throw new WebApplicationException(e);
+        }
+    }
+
+    private InputStream invokeApproachView() {
+        try {
+            return dms.getPlugin("de.tu-berlin.eduzen.task-views").getResourceAsStream("web/approach.html");
         } catch (Exception e) {
             throw new WebApplicationException(e);
         }

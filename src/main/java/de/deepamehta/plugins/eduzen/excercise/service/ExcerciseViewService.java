@@ -19,4 +19,8 @@ public interface ExcerciseViewService extends PluginService {
 
     InputStream getLectureTopicalareaView(long lectureId, long topicalareaId, ClientState clientState);
 
+    InputStream getTopicalareaView(long topicalareaId, ClientState clientState);
+
+    InputStream getTopicalareaExcerciseView(long topicalareaId, long excerciseTextId, ClientState clientState);
+
 }
