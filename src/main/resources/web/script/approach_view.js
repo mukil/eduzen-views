@@ -15,8 +15,8 @@ var aView = new function () {
   this.user = undefined
   this.currentTopicalareas = new Array()
   this.currentTopicalarea = undefined
-  this.currentExcercises = new Array()
-  this.currentExcercise = undefined
+  this.currentExcerciseTexts = new Array()
+  this.currentExcerciseText = undefined
   this.currentLecture = undefined // FIXME: move to uView, support many
 
   /** excercise View application controler **/
@@ -53,7 +53,7 @@ var aView = new function () {
       aView.renderHeader()
       // ### render general infos for topicalarea
       if (excerciseId != undefined) {
-        aView.currentExcercise = dmc.get_topic_by_id(excerciseId, true)
+        aView.currentExcerciseText = dmc.get_topic_by_id(excerciseId, true)
         aView.renderExcercise() // current excercise, set by url
       } else {
         // ### or all other excercises from within our current topicalarea
@@ -74,14 +74,20 @@ var aView = new function () {
   }
 
   this.renderHeader = function () {
+      $("#header").addClass("approach-view")
       aView.renderUser()
   }
 
   this.renderExcercise = function () {
-    // console.log(aView.currentExcercise)
-    $("<b class=\"label\">Hier ist deine n&auml;chste Aufgabe.</b>").insertBefore("#bottom")
-    $("<div class=\"excercise approach\">" + aView.currentExcercise.value + "</div>").insertBefore("#bottom")
-    console.log(aView.currentExcercise.composite["tub.eduzen.excercise_description"])
+    var eId = aView.currentExcerciseText.id
+    var eName = aView.currentExcerciseText.value
+    var eText = aView.currentExcerciseText.composite["tub.eduzen.excercise_description"].value
+    $("<b class=\"label\">Hier ist die Aufgabentellung</b><br/><br/>").insertBefore("#bottom")
+    $("<div class=\"excercise-text\">" + eName + "<br/><br/>"
+      + eText + "</div><br/><br/>").insertBefore("#bottom")   
+    $("#content").append("<a class=\"button\" href=\"javascript:aView.takeOnThisExcercise()\"" 
+      + " alt=\"Aufgabenstellung entgegennehmen\" title=\"Aufgabenstellung entgegennehmen\">"
+      + "Aufgabenstellung entgegennehmen</a>")
   }
 
   this.renderUser = function () {
@@ -97,14 +103,56 @@ var aView = new function () {
 
   /** Controler to take on an excercise **/
 
-  this.createApproachForExcercise = function (excerciseTextId) {
-    var userId = aView.user.id
+  this.takeOnThisExcercise = function () {
+    // create Excercise and relate it to excerciseTextId and relate it to userId 
+    var tub = aView.getTUBIdentity()
+    var eText = aView.currentExcerciseText
+    console.log(tub)
+    // ### to clarify: author of approach or author of excercise, taking the latter
+    /** var excercise = dmc.create_topic({ "type_uri": "tub.eduzen.excercise"})
+    var authorModel = { "type_uri":"tub.eduzen.author", 
+      "role_1":{"topic_id":tub.id, "role_type_uri":"dm4.core.default"},
+      "role_2":{"topic_id":excercise.id, "role_type_uri":"dm4.core.default"}
+    }
+    var excerciseTextModel = { "type_uri":"dm4.core.aggregation", 
+      "role_1":{"topic_id":excercise.id, "role_type_uri":"dm4.core.default"},
+      "role_2":{"topic_id":eText.id, "role_type_uri":"dm4.core.default"}
+    }
+    dmc.create_association(authorModel)
+    dmc.create_association(excerciseTextModel)
+    // excercise-objects will be assigned to the excercise taken by the current user, in the approach-view
+    // but when do we know that we need to get an excercise-object an when not?
+    aView.getExcerciseObject(eText.id, excercise.id) **/
+    // so, we cannot distinct if an excercise_text is a) self-contained or b) needs an excercise-object?
+    aView.createApproachForExcercise()
+    // navigate to approach view..
+  }
+
+  this.createApproachForExcercise = function () {
+    aView.renderApproachForm()
     // 
   }
 
-  this.fillUpExcercise = function (excerciseTextId) {
-    // method to find a compatible excercise-object for our currentExcercise
-    // and to assign this to the excercise_text via excercise
+  this.renderApproachForm = function  () {
+    // ### 
+  }
+
+  this.getExcerciseObject = function (excerciseTextId, excerciseId) {
+    // method to find a compatible excercise-object for our currentExcercise, ### which was not used yet by user
+    // and assign this object to the given excercise
+    var compatibleObjects = dmc.get_topic_related_topics(excerciseTextId, 
+      {"others_topic_type_uri": "tub.eduzen.excercise_object", "assoc_type_uri": "tub.eduzen.compatible"})
+    var compatible = (compatibleObjects.total_count > 0) ? compatibleObjects.items[0] : undefined // just take one
+    var compatibleModel = { "type_uri":"dm4.core.aggregation", 
+      "role_1":{"topic_id":excercise.id, "role_type_uri":"dm4.core.default"},
+      "role_2":{"topic_id":compatible.id, "role_type_uri":"dm4.core.default"}
+    }
+    dmc.create_association(compatibleModel)
+  }
+
+  this.getTUBIdentity = function () {
+    var ids = dmc.get_topic_related_topics(aView.user.id, {"others_topic_type_uri": "tub.eduzen.identity"})
+    return (ids.total_count > 0) ? dmc.get_topic_by_id(ids.items[0].id, true) : undefined
   }
 
   this.loadLecturesUserIsParticipatingIn = function () {

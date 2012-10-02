@@ -2,6 +2,14 @@
     padding-top: 30px;
 }
 
+.eduzen #header.approach-view {
+    height: 60px;
+}
+
+.eduzen a.button {
+    text-decoration: none;
+}
+
 .eduzen label {
     font-size: 11px;
     color: #a8a8a8;
@@ -46,8 +54,7 @@
 
 .eduzen #content p.buffer {
     padding: 30px;
-    width: 100%;
-    font-weight: bold;
+    width: 90%;
 }
 
 .eduzen .topicalareaname {
