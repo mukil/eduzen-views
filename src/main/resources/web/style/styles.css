@@ -2,18 +2,39 @@
     padding-top: 30px;
 }
 
-.eduzen #header.approach-view {
+.eduzen.approach-view #header {
     height: 60px;
 }
+
+.eduzen.approach-view #content {
+    top: 40px;
+    padding-bottom: 80px;
+}
+
+.eduzen.approach-view .button.disabled, 
+.eduzen.approach-view .button, 
+.eduzen.approach-view input.button {
+    padding: 4px;
+}
+
+.eduzen.approach-view #bottom {
+    padding-left: 10px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.eduzen.approach-view .info {}
 
 .eduzen a.button {
     text-decoration: none;
 }
 
-.eduzen label {
-    font-size: 11px;
+.eduzen label,
+.eduzen .label {
     color: #a8a8a8;
     margin-bottom: 4px;
+    font-weight: bold;
+    line-height: 1.6em;
 }
 
 .eduzen br {
@@ -79,7 +100,7 @@
     border: 1px solid #12b4d7;
     color: #000;
     padding: 4px;
-    margin: 4px;
+    margin: 0px;
 }
 
 .eduzen .button {

@@ -75,17 +75,20 @@ var eView = new function () {
         + host + authorClientURL + "\">Autorenoberfl&auml;che</a> und laden danach diese Seite erneut.")
     } else {
       $(".title").html("Hi <a href=\"/eduzen/view/user/" + eView.user.id + "\" class=\"username\"> "
-        + eView.user.value + "</a>!<p><br/></p>")
+        + eView.user.value + "</a>, ")
     }
   }
 
   this.renderLecture = function () {
-    $(".title").append("Hier findest du &Uuml;bungs und Beispielaufgaben zu deiner" 
+    $(".title").append("hier findest du &Uuml;bungs- und Beispielaufgaben zu deiner" 
       + " Lehrveranstaltung <a href=\"/eduzen/view/lecture/" + eView.currentLecture.id
       + "\" class=\"lecturename\">" + eView.currentLecture.value + "</a>")
   }
 
   this.renderTopicalareas = function () {
+    $("<p class=\"buffer\"><b class=\"label\">Dies ist deine pers&ouml;nliche &Uuml;bersicht &uuml;ber alle "
+      + "Themenkomplexe die in dieser Pr&uuml;fung abgefragt werden k&ouml;nnen:</b></p>")
+      .insertBefore("#result-list")
     for (i = 0; i < eView.currentTopicalareas.length; i++) {
       var topicalarea = eView.currentTopicalareas[i]
       var lectureId = eView.currentLecture.id
@@ -104,7 +107,7 @@ var eView = new function () {
       + "<a href=\"/eduzen/view/lecture/" + eView.currentLecture.id + "/topicalarea/"
       + eView.currentTopicalarea.id + "\" class=\"topicalareaname selected\" title=\"Themenkomplex: "
       + tpName + "\" alt=\"" + tpName + "\">" + tpName + "</a></p>"
-    $(backtopic).insertBefore("#result-list")
+    $("#header").append(backtopic)
     eView.loadSampleExcerciseTextsForTopicalarea()
     // ### eView.loadSomeContentForThisTopicalarea()
     // load excercise-texts for this topicalarea
@@ -149,11 +152,15 @@ var eView = new function () {
     var excercise_texts = dmc.get_association_related_topics(contentAssociation.id, 
       { "others_topic_type_uri": "tub.eduzen.excercise_text" }).items
     if (excercise_texts.length > 1) {
-      $("<p class=\"buffer\"><b class=\"label\">" + "Versuch`s mal selbst mit einer der "
-        + excercise_texts.length + " &Uuml;bungsaufgaben</b></p>").insertBefore("#result-list") 
+      $("<p class=\"buffer\"><b class=\"label\">Versuch`s mal selbst mit einer der "
+        + excercise_texts.length + " &Uuml;bungsaufgaben</b></p>").insertBefore("#result-list")
+    } else if (excercise_texts.length == 1) {
+      $("<p class=\"buffer\"><b class=\"label\">Versuch`s mal selbst mit der &Uuml;bungsaufgabe</b></p>")
+        .insertBefore("#result-list")
     } else {
-      $("<p class=\"buffer\"><b class=\"label\">" + "Versuch`s mal selbst mit der &Uuml;bungsaufgabe</b></p>")
-        .insertBefore("#result-list")    
+      $("<p class=\"buffer\"><b class=\"label\">Es wurden leider noch keine &Uuml;bungsaufgaben "
+        + " f&uuml;r diesen Themenkomplex in deiner Lehrveranstaltung eingestellt.</b></p>")
+        .insertBefore("#result-list")
     }
     
     for (i = 0; i < excercise_texts.length; i++) {
