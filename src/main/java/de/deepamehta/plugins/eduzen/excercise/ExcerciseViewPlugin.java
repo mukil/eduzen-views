@@ -88,12 +88,13 @@ public class ExcerciseViewPlugin extends PluginActivator implements ExcerciseVie
     }
 
     @GET
-    @Path("/topicalarea/{topicalareaId}/etext/{excerciseTextId}")
+    @Path("/lecture/{lectureId}/topicalarea/{topicalareaId}/etext/{excerciseTextId}")
     @Produces("text/html")
     @Override
-    public InputStream getTopicalareaExcerciseView(@PathParam("topicalareaId") long topicalareaId, 
-        @PathParam("excerciseTextId") long excerciseTextId, @HeaderParam("Cookie") ClientState clientState) {
-        logger.info("loading eduzen topicalarea-view for topicalarea: " + topicalareaId
+    public InputStream getTopicalareaExcerciseView(@PathParam("lectureId") long lectureId,
+        @PathParam("topicalareaId") long topicalareaId, @PathParam("excerciseTextId") long excerciseTextId, 
+        @HeaderParam("Cookie") ClientState clientState) {
+        logger.info("loading eduzen topicalarea-view for lecture " + lectureId + ", topicalarea " + topicalareaId
           + " and/ excercise " + excerciseTextId);
         return invokeApproachView();
     }
@@ -104,6 +105,15 @@ public class ExcerciseViewPlugin extends PluginActivator implements ExcerciseVie
     @Override
     public InputStream getLecturesView(@HeaderParam("Cookie") ClientState clientState) {
         logger.info("loading eduzen lectures-view .. NOT YET IMPLEMENTED");
+        return invokeApproachView();
+    }
+
+    @GET
+    @Path("/submissions")
+    @Produces("text/html")
+    @Override
+    public InputStream getSubmittedApproachesView(@HeaderParam("Cookie") ClientState clientState) {
+        logger.info("loading eduzen submission-view .. ");
         return invokeApproachView();
     }
 

@@ -18,9 +18,11 @@ var eView = new function () {
   this.currentTopicalareas = new Array()
   this.currentTopicalarea = undefined
 
-  /** excercise View application controler **/
+  /** Excercise View Application Controler **/
 
   this.initViews = function () { 
+    // This view routes on "lecture/423515/topicalarea/68429", "lecture/423515/" and "/start"
+
     eView.user = eView.getCurrentUser()
     if (eView.user != undefined) {
       eView.createSomeDummyExcerciseAssocs()
@@ -33,6 +35,7 @@ var eView = new function () {
     var entity = commands[0]
     var id = commands[1]
     var topicalareaId = undefined
+
     if (entity === "lecture") {
       console.log("load lecture-view for => " + id)
       if (commands[2] === "topicalarea") {
@@ -118,8 +121,9 @@ var eView = new function () {
   /** Controler to take on an excercise **/
 
   this.showExcerciseForUser = function (eId, uId) {
-    console.log("excerciseId => " + eId + " userId => " + uId);
-    window.location.href = host + "/eduzen/view/topicalarea/" + eView.currentTopicalarea.id + "/etext/" + eId
+    console.log("excerciseId => " + eId + " userId => " + uId)
+    window.location.href = host + "/eduzen/view/lecture/" + eView.currentLecture.id
+      + "/topicalarea/" + eView.currentTopicalarea.id + "/etext/" + eId
   }
 
   /** HTML5 History API utility methods **/
@@ -195,9 +199,12 @@ var eView = new function () {
             for (a in approaches.items) { // get all approaches marked as sample solution
               var approach = approaches.items[a]
               approach = dmc.get_topic_by_id(approach.id, true)
-              if (approach.composite["tub.eduzen.approach_sample"].value) {
-                hasSampleSolution = true
-                sampleApproach = approach
+              // sanity check, some approaches have no value set here..
+              if (approach.composite["tub.eduzen.approach_sample"]) {
+                if (approach.composite["tub.eduzen.approach_sample"].value) {
+                  hasSampleSolution = true
+                  sampleApproach = approach
+                } 
               }
             }
           } else {

@@ -11,61 +11,79 @@ var dict = new eduzenDictionary("DE")
 var aView = new function () {
 
   this.historyApiSupported = window.history.pushState
-
   this.ui = undefined
+
   this.user = undefined
+  this.tub = undefined
+
   this.currentTopicalareas = new Array()
   this.currentTopicalarea = undefined
   this.currentExcerciseTexts = new Array()
   this.currentExcerciseText = undefined
-  this.currentLecture = undefined // FIXME: move to uView, support many
+  this.currentLectureId = undefined // FIXME: move to uView, support many
   this.currentExcercise = undefined
   this.currentExcerciseObject = undefined
   this.currentApproach = undefined
   this.currentFileApproach = undefined
+  // personal work history for this excercise-text
+  this.allExcercises = new Array()
+  this.existingComments = new Array()
+  // personal state of an excercise-text can be
+  // "tub.eduzen.approach_undecided" | "tub.eduzen.approach_correct" | "tub.eduzen.approach_wrong" | "new"
+  this.eTextState = {"uri": "new"}
 
-  /** excercise View application controler **/
+
+  /** Main Approach View initialization controler **/
 
   this.initViews = function () {
-    aView.ui = new GUIToolkit() // used to create new upload-dialog
+    // This view routes on "lecture/*/topicalarea/*/etext/*" and "/submissions"
+    // consider: is topicalarea, and lecture really necessary here?
+    // log-in check
     aView.user = aView.getCurrentUser()
-    // handling deep links
+    aView.tub = aView.loadTUBIdentity()
+    aView.ui = new GUIToolkit() // used to create new upload-dialog
+
     var entryUrl = window.location.href
-    entryUrl = entryUrl.substr(entryUrl.indexOf("view/") + 5)
-    console.log("entry point => " + entryUrl.split("/"))
-    commands = entryUrl.split("/")
-    var entity = commands[0]
-    var topicalareaId = commands[1]
+    // handling deep links
+    commands = entryUrl.substr(entryUrl.indexOf("view/") + 5).split("/")
+    console.log("entry point => " + commands)
+    aView.currentLectureId = commands[1]
+    var entity = commands[2]
+    var topicalareaId = commands[3]
     var excerciseId = undefined
     if (entity === "topicalarea") {
       console.log("load topicalarea-view for => " + topicalareaId)
-      if (commands[2] === "etext") {
-        excerciseId = commands[3]
+      if (commands[4] === "etext") {
+        excerciseId = commands[5]
         console.log("  load excercise-view for => " + excerciseId)
       }
+      if (!aView.currentLectureId) throw new Error("No current Lecture was set. Try to log out and log in again.")
+      // init approach view for topicalarea and possibly an excercise.
       aView.initApproachView(topicalareaId, excerciseId)
-    } else if (entity === "lectures") {
-      aView.renderHeader()
-      console.log("why not loading all lectures a user is partcipating in..")
-      console.log(aView.loadLecturesUserIsParticipatingIn())
-      // ### todo: laod available lectures via "tub.eduzen.identity", implement this in uView
-      // push new application state /topicalarea/id
+    } else if (commands[0] === "submissions") {
+      console.log("why not load all submitted approachs and comments to it..")
+      aView.initSubmissionsView()
     }
   }
 
-  this.initApproachView = function (topicalareaId, excerciseId) {
+  this.initApproachView = function (topicalareaId, excerciseTextId) {
     if (topicalareaId != undefined) {
       aView.currentTopicalarea = dmc.get_topic_by_id(topicalareaId)
       aView.renderHeader()
       // ### render general infos for topicalarea
-      if (excerciseId != undefined) {
-        aView.currentExcerciseText = dmc.get_topic_by_id(excerciseId, true)
-        aView.renderExcercise() // current excercise, set by url
+      if (excerciseTextId != undefined) {
+        aView.loadExcercisesForExcerciseText(excerciseTextId)
+        if (aView.allExcercises.length > 0) {
+          // state of excercise-text for user is at least undecided, resp. "in Bearbeitung" now..
+          console.log("   loaded " + aView.allExcercises.length + " existing excercises for " + excerciseTextId)
+          aView.loadExistingCommentsForExcercises() // directly add them to the model
+        }
+        aView.currentExcerciseText = dmc.get_topic_by_id(excerciseTextId, true)
+        // render excercise-text with all taken excercises
+        aView.renderExcerciseText() // current excercise was set by url
       } else {
         // ### or all other excercises from within our current topicalarea
         // aView.renderAllExcercises()
-        console.log(dmc.get_topic_related_topics(aView.user.id, {"others_topic_type_uri": "tub.eduzen.excercise", 
-          "assoc_type_uri": "tub.eduzen.author"}))
       }
     } else {
       // no topicalarea set, no excercise_text requested.. get all open topical areas
@@ -79,32 +97,51 @@ var aView = new function () {
     }
   }
 
+  this.initSubmissionsView = function () {
+    if (aView.allExcercises) {
+      aView.renderAllExcercisesList()
+    }
+  }
+
+
+
+  /** Rendering Methods - Strictly Control Flow, Model Handling and View Updates **/
+
   this.renderHeader = function () {
       $(".eduzen").addClass("approach-view")
       aView.renderUser()
   }
 
-  this.renderExcercise = function () {
-    var eId = aView.currentExcerciseText.id
-    var eName = aView.currentExcerciseText.value
-    var eText = aView.currentExcerciseText.composite["tub.eduzen.excercise_description"].value
-    $("<b class=\"label\">Hier ist die Aufgabenstellung</b><br/><br/>").insertBefore("#bottom")
-    $("<div class=\"excercise-text\">" + eName + "<br/><br/>"
-      + eText + "</div><br/><br/>").insertBefore("#bottom")   
-    $("#content").append("<a class=\"button takeon\" href=\"javascript:aView.getExcerciseAndApproach()\"" 
-      + " alt=\"Aufgabenstellung entgegennehmen\" title=\"Aufgabenstellung entgegennehmen\">"
-      + "Aufgabenstellung entgegennehmen</a>")
-  }
-
   this.renderUser = function () {
     if (aView.user == undefined) {
       // ### FIXME uView.renderLogin()
-      $(".title").html("Bitte nutzen Sie zum einloggen vorerst die <a href=\"" 
+      $(".title").html("Bitte nutze zum einloggen vorerst die <a href=\"" 
         + host + authorClientURL + "\">Autorenoberfl&auml;che</a> und laden danach diese Seite erneut.")
     } else {
-      $("#header").remove()
+      $("#header").hide()
       $(".info").html("Hi <a href=\"/eduzen/view/user/" + aView.user.id + "\" class=\"username\"> "
-        + aView.user.value + "</a>, ")
+        + aView.user.value + "</a>")
+    }
+  }
+
+  this.renderExcerciseText = function () {
+    var eId = aView.currentExcerciseText.id
+    var eName = aView.currentExcerciseText.value
+    var eText = aView.currentExcerciseText.composite["tub.eduzen.excercise_description"].value
+    var approaches = undefined
+  
+    $("<b class=\"label\">Hier ist die Aufgabenstellung \"" + eName + "\"</b><br/><br/>").insertBefore("#bottom")
+    $("<div class=\"excercise-text\">"
+      + eText + "</div><br/><br/>").insertBefore("#bottom")
+    // 
+    // add submission button
+    $("#content").append("<a class=\"button takeon\" href=\"javascript:aView.handleExcerciseAndApproach()\"" 
+      + " alt=\"Aufgabenstellung entgegennehmen\" title=\"Aufgabenstellung entgegennehmen\">"
+      + "Aufgabenstellung entgegennehmen</a><br/><br/>")
+    if (aView.allExcercises.length > 0) {
+      $("#content").append("<br/><b class=\"label\">Historie</b> Du hast diese Aufgabenstellung bisher "
+        + aView.allExcercises.length + " mal bearbeitet")
+      aView.renderExcerciseHistory()
     }
   }
 
@@ -126,9 +163,57 @@ var aView = new function () {
   }
 
   this.renderExcerciseObject = function (eObject) {
+
     $("<b class=\"label\">Und hier ist die zu berechnende Aufgabe</b><br/><br/>").insertBefore("#bottom")
     $("<p class=\"excercise-object\">" + eObject.value + "</p><br/<br/>").insertBefore("#bottom")
   }
+
+  this.renderOptionsAfterSubmission = function () {
+
+    $("#content").html("<p class\"buffer\"><b class=\"label\">Dein L&ouml;sungsvorschlag f&uuml;r die "
+      + "Aufgabenstellung \"" + aView.currentExcerciseText.value + "\" haben wir nun im System abgespeichert.</b></p>")
+    $("#content").append("<p class\"buffer\"><b class=\"label\">Du kannst jetzt z.B.:</b><ul class=\"options\">"
+      + "<li><a href=\"" + host + "/eduzen/view/lecture/" + aView.currentLectureId + "/topicalarea/" + aView.currentTopicalarea.id + "\">"
+      + "weitere Aufgabenstellungen aus dem Themenkomplex \"" + aView.currentTopicalarea.value + "\" entgegennehmen</a></li>"
+      + "<li><a href=\"" + host + "/eduzen/view/submissions\">"
+      + "Korrekturen zu all deinen eingereichten Aufgaben abrufen</a></li>"
+      + "<li><a href=\"" + host + "/eduzen/view/start\">"
+      + "oder auch einen Blick in andere Themenkomplexe deiner Lehrveranstaltung werfen</a></li>"
+      + "</ul>Viel Erfolg!</p>")
+  }
+
+  /** Rendering all submissions of our current user **/
+
+  this.renderAllExcercisesList = function () {
+    $("#header").append("<b class=\"\">Eine Auflistung all deiner bisher eingereichten L&ouml;sungsvorschl&auml;ge</b>")
+    var itemList = "<ul>"
+    for (item in aView.allExcercises) {
+      var excercise = dmc.get_topic_by_id(aView.allExcercises[item].id, true)
+      itemList += "<li>" + excercise.value + "</li>"
+    }
+    itemList += "</ul>"
+    $("#content").html(itemList)
+  }
+
+  /** Rendering all tries for any given excercise-text and our current user **/
+  this.renderExcerciseHistory = function () {
+    $("#content").append("<ul id=\"taken-excercises\">")
+    for (item in aView.allExcercises) {
+      var excercise = dmc.get_topic_by_id(aView.allExcercises[item].id)
+      var approach = excercise.composite["tub.eduzen.approach"][0] // ### FIXME: approaches should not be many here
+      // "tub.eduzen.approach_content" | "tub.eduzen.approach_correctness" | "tub.eduzen.timeframe_note"
+      var listItem = "<li class=\"taken-excercise\">" 
+        + "<span class=\"name\">" + approach.composite["tub.eduzen.timeframe_note"].value + "</span><br/>"
+        + "<span class=\"state " + approach.composite["tub.eduzen.approach_correctness"].value
+        + " \">Status: " + approach.composite["tub.eduzen.approach_correctness"].value + "</span>"
+        + "<span class=\"comments\"># Kommentare</span>&nbsp;"
+        + "</li>"
+      $("#taken-excercises").append(listItem)
+      if (aView.getFileContent(approach.id)) console.log("debug: render approach list_entry with file symbol..") // ###
+    }
+  }
+
+
 
   /** Controler to take on an excercise with an approach **/
 
@@ -149,14 +234,16 @@ var aView = new function () {
       dmc.create_association(approachFilemodel)
       console.log("deBG: related newly uploaded file to approach via \"tub.eduzen.content_item\"")
     }
-    // render happy faces..
+    // ## render time take for excercise
+    // approach to excercise was submitted, render options
+    aView.renderOptionsAfterSubmission()
   }
 
   this.createExcerciseForUser = function () {
     // create Excercise, relate it to excerciseTextId and relate it to userId 
-    var tub = aView.getTUBIdentity()
     var eText = aView.currentExcerciseText
-    if (tub == undefined || eText == undefined) throw new Error("Something mad happened. Please try again.")
+    if (aView.tub == undefined) throw new Error("Your User-Account has no TUB-Identity. Cannot take excercises.")
+    if (eText == undefined) throw new Error("Something mad happened. Please try again.")
     // ### to clarify: author of approach or author of excercise, taking the latter
     // FIXME: set current time user has taken this excercise on server or never
     var excercise = dmc.create_topic({ "type_uri": "tub.eduzen.excercise"})
@@ -167,7 +254,7 @@ var aView = new function () {
     aView.currentExcercise = excercise
     // ### maybe use submitter instead of author, double check
     var authorModel = { "type_uri":"tub.eduzen.author", 
-      "role_1":{"topic_id":tub.id, "role_type_uri":"dm4.core.default"},
+      "role_1":{"topic_id":aView.tub.id, "role_type_uri":"dm4.core.default"},
       "role_2":{"topic_id":excercise.id, "role_type_uri":"dm4.core.default"}
     }
     var excerciseTextModel = { "type_uri":"dm4.core.aggregation", 
@@ -193,9 +280,9 @@ var aView = new function () {
       console.log("INFO: current excercise was self-contained and did not need an excercise-object..")
     }
     var approachModel = { "type_uri": "tub.eduzen.approach", "composite": {
-        "tub.eduzen.approach_content": value, 
-        "tub.eduzen.timeframe_note": "Date of Today", 
-        "tub.eduzen.approach_correctness": "#id:tub.eduzen.approach_undecided" 
+        "tub.eduzen.approach_content": value,
+        "tub.eduzen.timeframe_note": "Date of Today",
+        "tub.eduzen.approach_correctness": "ref_uri:tub.eduzen.approach_undecided"
     }}
     var approach = dmc.create_topic(approachModel)
     if (approach == undefined || aView.currentExcercise == undefined) throw new Error("Something mad happened.")
@@ -208,7 +295,11 @@ var aView = new function () {
     return approach
   }
 
-  this.getExcerciseAndApproach = function () {
+
+
+  /** Approach View Helpers  **/
+
+  this.handleExcerciseAndApproach = function () {
     // get an excercise-object if available and display it along with an approach form
     $(".button.takeon").remove()
     // if we have at least one excercise-object, we assume users have to take it.
@@ -223,14 +314,6 @@ var aView = new function () {
     aView.renderApproachForm()
   }
 
-  this.getExcerciseObject = function (excerciseTextId) {
-    // method to find a compatible excercise-object for our currentExcercise, 
-    // ### which was not used yet by user, unsaved
-    var compatibleObjects = dmc.get_topic_related_topics(excerciseTextId, 
-      {"others_topic_type_uri": "tub.eduzen.excercise_object", "assoc_type_uri": "tub.eduzen.compatible"})
-    return (compatibleObjects.total_count > 0) ? compatibleObjects.items[0] : undefined // just take one
-  }
-
   this.handleUploadResponse = function (response) {
     aView.currentFileApproach = response
     if (aView.currentFileApproach.file_name.indexOf("deepamehta-files") == 0) {
@@ -243,19 +326,126 @@ var aView = new function () {
     }
   }
 
-  this.getTUBIdentity = function () {
+  this.hasCorrectComment = function (comments) {
+    // TODO:
+    for (item in aView.allExcercises) {
+      var comment = dmc.get_topic_by_id(aView.allExcercises[item].id)
+      console.log("         ??? hasCorrectComment=" + JSON.stringify(comment))
+    }
+  }
+
+
+
+  /** Server Communications - Strictly persisting server and updating client side model **/
+  /** Methods to access eduzen, deepamehta-core and accesscontrol REST-Services **/
+
+  this.loadExistingCommentsForExcercises = function () {
+    // personal state of excercise-text is determined by all taken excercises
+    for (item in aView.allExcercises) {
+      var excercise = dmc.get_topic_by_id(aView.allExcercises[item].id)
+      var approachId = excercise.composite["tub.eduzen.approach"][0].id
+      if (excercise.composite["tub.eduzen.approach"].length > 0) {
+        var comments = aView.getCommentsForApproach(approachId)
+        console.log("       loaded " + comments.total_count + " comments on this taken excercise (with approachId=" + approachId + ")")
+        if (comments.total_count > 0) {
+          aView.existingComments = comments
+          if(aView.hasCorrectComment(comments)) {
+            aView.isCorrect = true
+            aView.isUndecided = false
+            console.log("       comments speak, this taken excercise was correct. " + excercise.id)
+          }
+          console.log("       comments dont speak about state of this taken excercise. " + excercise.id)
+        }
+      } else {
+        throw new Error("The excercise was taken but no approach yet exists. That`s mad, should never happen.")
+      }
+    }
+  }
+
+  /** implicit in model this is ..
+  this.getApproachForExcercise = function (excerciseId) {
+    dmc.get_topic_related_topics(eTextId, {"others_topic_type_uri": "tub.eduzen.excercise",
+    "assoc_type_uri": "dm4.core.aggregation"})
+    return dmc.get_topic_related_topics(excerciseId,
+      {"others_topic_type_uri": "tub.eduzen.approach", "assoc_type_uri": "dm4.core.composition"})
+  } **/
+
+  this.loadExcercisesForExcerciseText = function(eTextId) {
+    var usersExcercises = new Array()
+    // get excercises just by this author FIXME: assemble this on the server-side
+    if (!aView.tub) throw new Error("User has not a TUB Identity yet, skipping view.")
+    var excercisesByUser = aView.getAllExcercisesByUser()
+    // console.log("debug: user has taken " + allExcercisesByUser.total_count + " excercises in total")
+    if (excercisesByUser != undefined) {
+      for (element in excercisesByUser) {
+        var excercise = excercisesByUser[element]
+        var eTexts = dmc.get_topic_related_topics(excercise.id, {"others_topic_type_uri": "tub.eduzen.excercise_text",
+          "assoc_type_uri": "dm4.core.aggregation"}) // eText plays "Part"-Role here
+        if (eTexts.total_count > 0) { // one excercise has always just one excercise_text assigned
+          // console.log("debug: filtering to excercises by user taken on this excercise-text "
+            // + eTextId + "(" + eTexts.items[0].id + ")")
+          if (eTextId == eTexts.items[0].id) {
+            usersExcercises.push(excercise)
+          }
+        }
+      }
+      aView.allExcercises = usersExcercises
+    }
+  }
+
+  this.loadTUBIdentity = function () {
     var ids = dmc.get_topic_related_topics(aView.user.id, {"others_topic_type_uri": "tub.eduzen.identity"})
     return (ids.total_count > 0) ? dmc.get_topic_by_id(ids.items[0].id, true) : undefined
   }
 
   this.loadLecturesUserIsParticipatingIn = function () {
-    if (aView.user == undefined) return undefined
+    if (!aView.tub) throw new Error("Your User Account has now TUB Identity, so no submitted approaches.")
     // get "username"-id, to get "tub.eduzen.identity"-id to then find related lectures
     var identity = dmc.get_topic_related_topics(aView.user.id, {"others_topic_type_uri": "tub.eduzen.identity", 
       "assoc_type_uri": "dm4.core.aggregation"}).items[0]
     return dmc.get_topic_related_topics(identity.id, {"others_topic_type_uri": "tub.eduzen.lecture", 
       "assoc_type_uri": "tub.eduzen.participant"})
   }
+
+  /** Server Communications - Strictly returning raw data **/
+
+  this.getAllExcercisesByUser = function () {
+    if (!aView.tub) throw new Error("Your User Account has now TUB Identity, so no submitted approaches.")
+    var approaches = dmc.get_topic_related_topics(aView.tub.id, {"others_topic_type_uri": "tub.eduzen.excercise", 
+      "assoc_type_uri": "tub.eduzen.author"})
+    return (approaches.total_count > 0) ? approaches.items : undefined
+  }
+
+  this.getCommentsForApproach = function (approachId) {
+    return dmc.get_topic_related_topics(approachId,
+      {"others_topic_type_uri": "tub.eduzen.comment", "assoc_type_uri": "dm4.core.composition"})
+  }
+
+  this.getFileContent = function (topicId) {
+    var files = dmc.get_topic_related_topics(topicId, {"others_topic_type_uri": "dm4.files.file", 
+      "assoc_type_uri": "tub.eduzen.content_item"})
+    return (files.total_count > 0) ? files.items : undefined
+  }
+
+  this.getExcerciseObject = function (excerciseTextId) {
+    // method to find a compatible excercise-object for our currentExcercise, 
+    // ### which was not used yet by user, unsaved
+    var compatibleObjects = dmc.get_topic_related_topics(excerciseTextId, 
+      {"others_topic_type_uri": "tub.eduzen.excercise_object", "assoc_type_uri": "tub.eduzen.compatible"})
+    return (compatibleObjects.total_count > 0) ? compatibleObjects.items[0] : undefined // just take one
+  }
+
+  this.getCurrentUser = function() {
+    return dmc.request("GET", "/accesscontrol/user", undefined, undefined, undefined, false)
+  }
+
+  this.logout = function() {
+
+    return dmc.request("POST", "/accesscontrol/logout", undefined, undefined)
+  }
+
+
+
 
   /** HTML5 History API utility methods **/
 
@@ -270,16 +460,9 @@ var aView = new function () {
     window.history.pushState(history_entry.state, null, history_entry.url)
   }
 
-  /** Methods to access eduzen and accesscontrol REST-Services **/
 
-  this.getCurrentUser = function() {
-    return dmc.request("GET", "/accesscontrol/user", undefined, undefined, undefined, false)
-  }
 
-  this.logout = function() {
-
-    return dmc.request("POST", "/accesscontrol/logout", undefined, undefined)
-  }
+  /** GUIToolkit Helper Methods copied from dm4-webclient module **/
 
   /**
    * @param   path        the file repository path (a string) to upload the selected file to. Must begin with "/".
