@@ -215,18 +215,23 @@ var aView = new function () {
 
 
 
-  /** Controler to take on an excercise with an approach **/
+  /** 
+   * Controler to take on an excercise with an approach 
+   * Input:  TUB-Identity, Excercise Text, Excercise Object, Approach Value, File, Timestamp
+   * Output: TUB-Identity <author> Excercise (<composedof> Excercise Text AND <composedof> Excercise Object) 
+   *         <aggregate> Approach Composite :which_can_haz: <content_item> File
+   **/
 
   this.submitApproachToExcercise = function () {
-    // 1) create excercise
+    // 1) create excercise and relate it to current user
     aView.createExcerciseForUser()
-    // 2) create + relate approach to it
+    // 2) create + relate approach to that excercise
     var submittedValue = $("[name=excercise-input]").val()
     var approach = aView.createApproachForExcercise(submittedValue) // along with excercise-object, if necessary
     if (!approach) throw new Error("Approach could not be submitted. Something went wrong.")
-    // and with a possibly submitted file-upload to this appraoch, too
+    // attach a possibly submitted file-upload to this appraoch
     if (aView.currentFileApproach != undefined) {
-      // also relate the just uploaded file-topic to our approach
+      // and relate the just uploaded file-topic to our approach
       var approachFilemodel = { "type_uri":"tub.eduzen.content_item", 
         "role_1":{"topic_id":approach.id, "role_type_uri":"dm4.core.whole"},
         "role_2":{"topic_id":aView.currentFileApproach.topic_id, "role_type_uri":"dm4.core.part"}
@@ -281,7 +286,7 @@ var aView = new function () {
     }
     var approachModel = { "type_uri": "tub.eduzen.approach", "composite": {
         "tub.eduzen.approach_content": value,
-        "tub.eduzen.timeframe_note": "Date of Today",
+        "tub.eduzen.timeframe_note": new Date().getTime(),
         "tub.eduzen.approach_correctness": "ref_uri:tub.eduzen.approach_undecided"
     }}
     var approach = dmc.create_topic(approachModel)

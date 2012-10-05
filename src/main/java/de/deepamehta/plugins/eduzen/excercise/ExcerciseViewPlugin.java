@@ -117,6 +117,17 @@ public class ExcerciseViewPlugin extends PluginActivator implements ExcerciseVie
         return invokeApproachView();
     }
 
+    @GET
+    @Path("/comments")
+    @Produces("text/html")
+    @Override
+    public InputStream getCommentingView(@HeaderParam("Cookie") ClientState clientState) {
+        logger.info("loading eduzen commenting-view .. ");
+        return invokeCommentView();
+    }
+
+
+
     // ------------------------------------------------------------------------------------------------ Private Methods
 
     private InputStream invokeStartView() {
@@ -143,5 +154,12 @@ public class ExcerciseViewPlugin extends PluginActivator implements ExcerciseVie
         }
     }
     
+    private InputStream invokeCommentView() {
+        try {
+            return dms.getPlugin("de.tu-berlin.eduzen.task-views").getResourceAsStream("web/comment.html");
+        } catch (Exception e) {
+            throw new WebApplicationException(e);
+        }
+    }
 
 }

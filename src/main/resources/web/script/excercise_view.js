@@ -13,7 +13,7 @@ var eView = new function () {
   this.historyApiSupported = window.history.pushState
   this.insertDummyContents = false
   this.user = undefined
-  this.defaultLecture = 423515 // Lecture of Mathematik 1 für ChemikerInnen
+  this.defaultLecture = 424014 // Lecture of Mathematik 1 für ChemikerInnen
   this.currentLecture = undefined
   this.currentTopicalareas = new Array()
   this.currentTopicalarea = undefined
@@ -54,6 +54,7 @@ var eView = new function () {
     eView.currentLecture = dmc.get_topic_by_id(lectureId, true)
     if (eView.currentLecture != undefined) {
       eView.renderHeader()
+      if (eView.user == undefined) throw new Error("Your user has no TUB Identity. Please login first.")
       eView.renderLecture()
       if (topicalareaId != undefined) {
         eView.currentTopicalarea = dmc.get_topic_by_id(topicalareaId)
@@ -104,6 +105,7 @@ var eView = new function () {
   }
 
   this.renderTopicalarea = function () {
+    // render n-balken below
     // "<a href=\"/eduzen/view/lecture/" + lectureId + "\" class=\"back\">Zur&uuml;ck</a>"
     var tpName = eView.currentTopicalarea.value
     var backtopic = "<p class=\"buffer\"><b class=\"label\">Du schaust gerade auf den Themenkomplex</b> "
@@ -143,13 +145,13 @@ var eView = new function () {
 
   this.loadTopicalAreasByLV = function(id) {
     return dmc.get_topic_related_topics(id, {"others_topic_type_uri": "tub.eduzen.topicalarea", 
-      "assoc_type_uri": "tub.eduzen.lecture_content"})
+      "assoc_type_uri": "tub.eduzen.lecture_content_topicalarea"})
   }
 
   this.loadExcerciseTextsForTopicalarea = function () {
     // load association between lecture and topicalarea
     // FIXME: an ET could be many times lecture_content?
-    var contentAssociation = dmc.get_association("tub.eduzen.lecture_content", 
+    var contentAssociation = dmc.get_association("tub.eduzen.lecture_content_topicalarea", 
       eView.currentLecture.id, eView.currentTopicalarea.id, "dm4.core.default", "dm4.core.default", true)
     console.log(contentAssociation)
 
@@ -180,10 +182,11 @@ var eView = new function () {
 
   this.loadSampleExcerciseTextsForTopicalarea = function () {
     // FIXME make sure this is none of the excercise-texts assigned for this topicalarea in this lecture..
-    var contentAssociation = dmc.get_association("tub.eduzen.lecture_content", 
+    var contentAssociation = dmc.get_association("tub.eduzen.lecture_content_topicalarea", 
       eView.currentLecture.id, eView.currentTopicalarea.id, "dm4.core.default", "dm4.core.default", true)
     var excercise_texts = dmc.get_association_related_topics(contentAssociation.id, 
-      { "others_topic_type_uri": "tub.eduzen.excercise_text" }).items
+      { "others_topic_type_uri": "tub.eduzen.excercise_text", 
+        "assoc_type_uri": "tub.eduzen.lecture_content_excercise"}).items
     var sampleApproach = undefined
     for (i = 0; i < excercise_texts.length; i++) {
       var e_text = excercise_texts[i]
@@ -237,23 +240,24 @@ var eView = new function () {
   this.createSomeDummyExcerciseAssocs = function () {
     if (eView.insertDummyContents) {
       console.log("\"" + eView.user.value + "\" is creating associations per script to connect"
-        + " excercise_texts with lecture_content associations")
+        + " excercise_texts with lecture_content_* associations")
       // ### TKs LVI-Edge Elementare Funktionen: 429031 
       // TKs LVI-Edge Eigenschaften stetiger Funktionen: 431380
       // TKs LVI-Edge Zusammengesetze Funktionen: 431128
+      // TKs LVI-Edge Symmetrie: 431795
       // ET Vektoralgebra: 80859
       // ET Algebraische und Transzendente Funktionen: 43103
       // ET Skizzieren des Graphen: 21422
-      var assocModel1 = { "type_uri":"tub.eduzen.lecture_content", 
-        "role_1":{"assoc_id":431380,"role_type_uri":"dm4.core.default"},
+      var assocModel1 = { "type_uri":"tub.eduzen.lecture_content_excercise", 
+        "role_1":{"assoc_id":431795,"role_type_uri":"dm4.core.default"},
         "role_2":{"topic_id":80859,"role_type_uri":"dm4.core.default"}
       }
-      var assocModel2 = { "type_uri":"tub.eduzen.lecture_content", 
-        "role_1":{"assoc_id":431128,"role_type_uri":"dm4.core.default"},
+      var assocModel2 = { "type_uri":"tub.eduzen.lecture_content_excercise", 
+        "role_1":{"assoc_id":431795,"role_type_uri":"dm4.core.default"},
         "role_2":{"topic_id":43103,"role_type_uri":"dm4.core.default"}
       }
-      var assocModel3 = { "type_uri":"tub.eduzen.lecture_content", 
-        "role_1":{"assoc_id":431128,"role_type_uri":"dm4.core.default"},
+      var assocModel3 = { "type_uri":"tub.eduzen.lecture_content_excercise", 
+        "role_1":{"assoc_id":431795,"role_type_uri":"dm4.core.default"},
         "role_2":{"topic_id":21422,"role_type_uri":"dm4.core.default"}
       }
       dmc.create_association(assocModel1)
@@ -261,9 +265,10 @@ var eView = new function () {
       dmc.create_association(assocModel3)
       // ### TKs LVI-Edge Imaginäre Einheit: 429283
       // TKs LVI-Edge Leibnizsche Regel: 431296
+      // TKs LVI-Edge Kartesische Koordinaten: 431879
       // ET Komplexe Zahlen: 292971
-      var assocModel4 = { "type_uri":"tub.eduzen.lecture_content", 
-        "role_1":{"assoc_id":431296,"role_type_uri":"dm4.core.default"},
+      var assocModel4 = { "type_uri":"tub.eduzen.lecture_content_excercise", 
+        "role_1":{"assoc_id":431879,"role_type_uri":"dm4.core.default"},
         "role_2":{"topic_id":292971,"role_type_uri":"dm4.core.default"}
       }
       dmc.create_association(assocModel4)

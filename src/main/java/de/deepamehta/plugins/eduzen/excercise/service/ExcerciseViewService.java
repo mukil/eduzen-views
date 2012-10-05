@@ -26,4 +26,6 @@ public interface ExcerciseViewService extends PluginService {
 
     InputStream getSubmittedApproachesView(ClientState clientState);
 
+    InputStream getCommentingView(ClientState clientState);
+
 }

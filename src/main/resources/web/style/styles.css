@@ -72,6 +72,8 @@
     float: right;
 }
 
+.commenting-view .submitted-at, 
+.commenting-view .submitter,
 .taken-excercise .state,
 .taken-excercise .comments {
     color: #a8a8a8;
