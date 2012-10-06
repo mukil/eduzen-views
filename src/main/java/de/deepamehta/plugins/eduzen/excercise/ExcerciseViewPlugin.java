@@ -91,11 +91,23 @@ public class ExcerciseViewPlugin extends PluginActivator implements ExcerciseVie
     @Path("/lecture/{lectureId}/topicalarea/{topicalareaId}/etext/{excerciseTextId}")
     @Produces("text/html")
     @Override
-    public InputStream getTopicalareaExcerciseView(@PathParam("lectureId") long lectureId,
+    public InputStream getTopicalareaExcerciseTextView(@PathParam("lectureId") long lectureId,
         @PathParam("topicalareaId") long topicalareaId, @PathParam("excerciseTextId") long excerciseTextId, 
         @HeaderParam("Cookie") ClientState clientState) {
         logger.info("loading eduzen topicalarea-view for lecture " + lectureId + ", topicalarea " + topicalareaId
           + " and/ excercise " + excerciseTextId);
+        return invokeApproachView();
+    }
+
+    @GET
+    @Path("/lecture/{lectureId}/topicalarea/{topicalareaId}/etext/{excerciseTextId}/excercise/{excerciseId}")
+    @Produces("text/html")
+    @Override
+    public InputStream getTopicalareaExcerciseView(@PathParam("lectureId") long lectureId,
+        @PathParam("topicalareaId") long topicalareaId, @PathParam("excerciseTextId") long excerciseTextId, 
+        @PathParam("excerciseId") long excerciseId, @HeaderParam("Cookie") ClientState clientState) {
+        logger.info("loading eduzen topicalarea-view for lecture " + lectureId + ", topicalarea " + topicalareaId
+          + " and/ etext " + excerciseTextId + " and excercise " + excerciseId);
         return invokeApproachView();
     }
 
@@ -118,11 +130,21 @@ public class ExcerciseViewPlugin extends PluginActivator implements ExcerciseVie
     }
 
     @GET
-    @Path("/comments")
+    @Path("/commenting")
     @Produces("text/html")
     @Override
     public InputStream getCommentingView(@HeaderParam("Cookie") ClientState clientState) {
         logger.info("loading eduzen commenting-view .. ");
+        return invokeCommentView();
+    }
+
+    @GET
+    @Path("/commenting/excercise/{excerciseId}")
+    @Produces("text/html")
+    @Override
+    public InputStream getCommentingView(@PathParam("excerciseId") long excerciseId, 
+        @HeaderParam("Cookie") ClientState clientState) {
+        logger.info("loading eduzen commenting-view .. for " + excerciseId);
         return invokeCommentView();
     }
 

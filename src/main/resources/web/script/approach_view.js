@@ -40,6 +40,10 @@ var aView = new function () {
     // consider: is topicalarea, and lecture really necessary here?
     // log-in check
     aView.user = aView.getCurrentUser()
+    if (aView.user == null) {
+      aView.renderHeader()
+      return undefined
+    }
     aView.tub = aView.loadTUBIdentity()
     aView.ui = new GUIToolkit() // used to create new upload-dialog
 
@@ -50,37 +54,44 @@ var aView = new function () {
     aView.currentLectureId = commands[1]
     var entity = commands[2]
     var topicalareaId = commands[3]
+    var excerciseTextId = undefined
     var excerciseId = undefined
     if (entity === "topicalarea") {
       console.log("load topicalarea-view for => " + topicalareaId)
       if (commands[4] === "etext") {
-        excerciseId = commands[5]
-        console.log("  load excercise-view for => " + excerciseId)
+        excerciseTextId = commands[5]
+        console.log("  load excercise-text-view for => " + excerciseTextId)
+        if (commands[6] === "excercise") {
+          excerciseId = commands[7]
+          console.log("  load excercise-view for => " + excerciseTextId)
+        }
       }
       if (!aView.currentLectureId) throw new Error("No current Lecture was set. Try to log out and log in again.")
       // init approach view for topicalarea and possibly an excercise.
-      aView.initApproachView(topicalareaId, excerciseId)
+      aView.initApproachView(topicalareaId, excerciseTextId, excerciseId)
     } else if (commands[0] === "submissions") {
       console.log("why not load all submitted approachs and comments to it..")
       aView.initSubmissionsView()
     }
   }
 
-  this.initApproachView = function (topicalareaId, excerciseTextId) {
+  this.initApproachView = function (topicalareaId, excerciseTextId, excerciseId) {
     if (topicalareaId != undefined) {
       aView.currentTopicalarea = dmc.get_topic_by_id(topicalareaId)
       aView.renderHeader()
       // ### render general infos for topicalarea
       if (excerciseTextId != undefined) {
-        aView.loadExcercisesForExcerciseText(excerciseTextId)
-        if (aView.allExcercises.length > 0) {
-          // state of excercise-text for user is at least undecided, resp. "in Bearbeitung" now..
-          console.log("   loaded " + aView.allExcercises.length + " existing excercises for " + excerciseTextId)
-          aView.loadExistingCommentsForExcercises() // directly add them to the model
-        }
         aView.currentExcerciseText = dmc.get_topic_by_id(excerciseTextId, true)
-        // render excercise-text with all taken excercises
-        aView.renderExcerciseText() // current excercise was set by url
+        if (excerciseId != undefined) {
+          aView.currentExcercise = dmc.get_topic_by_id(excerciseId, true)
+          // deep linking into excercise-info view
+          aView.renderExcerciseInfo()
+        } else {
+          // deep linking into excercise-text overview, fetch excercise-history
+          aView.loadExcercisesForExcerciseText(excerciseTextId)
+          // render excercise-text with all taken excercises
+          aView.renderExcerciseText() // current excercise was set by url
+        }
       } else {
         // ### or all other excercises from within our current topicalarea
         // aView.renderAllExcercises()
@@ -138,9 +149,10 @@ var aView = new function () {
     $("#content").append("<a class=\"button takeon\" href=\"javascript:aView.handleExcerciseAndApproach()\"" 
       + " alt=\"Aufgabenstellung entgegennehmen\" title=\"Aufgabenstellung entgegennehmen\">"
       + "Aufgabenstellung entgegennehmen</a><br/><br/>")
+    // if user had already the joy to meet this excercise-text
     if (aView.allExcercises.length > 0) {
-      $("#content").append("<br/><b class=\"label\">Historie</b> Du hast diese Aufgabenstellung bisher "
-        + aView.allExcercises.length + " mal bearbeitet")
+      $("#content").append("<br/><b class=\"label\">Historie</b> Du hast bisher "+ + aView.allExcercises.length 
+        + " &Uuml;bungen zu dieser Aufgabenstellung bearbeitet")
       aView.renderExcerciseHistory()
     }
   }
@@ -185,9 +197,11 @@ var aView = new function () {
   /** Rendering all submissions of our current user **/
 
   this.renderAllExcercisesList = function () {
-    $("#header").append("<b class=\"\">Eine Auflistung all deiner bisher eingereichten L&ouml;sungsvorschl&auml;ge</b>")
+    // unused
+    $("#header").append("<b class=\"\">Eine Auflistung all deiner bisher eingereichten &Uuml;bungen</b>")
     var itemList = "<ul>"
     for (item in aView.allExcercises) {
+      // display excercise-text for each taken excercise
       var excercise = dmc.get_topic_by_id(aView.allExcercises[item].id, true)
       itemList += "<li>" + excercise.value + "</li>"
     }
@@ -200,20 +214,70 @@ var aView = new function () {
     $("#content").append("<ul id=\"taken-excercises\">")
     for (item in aView.allExcercises) {
       var excercise = dmc.get_topic_by_id(aView.allExcercises[item].id)
-      var approach = excercise.composite["tub.eduzen.approach"][0] // ### FIXME: approaches should not be many here
+      // use the first approach representing a taken-excercise
+      var approach = excercise.composite["tub.eduzen.approach"][0]      
       // "tub.eduzen.approach_content" | "tub.eduzen.approach_correctness" | "tub.eduzen.timeframe_note"
+      var name = approach.composite["tub.eduzen.timeframe_note"].value
+      var state = approach.composite["tub.eduzen.approach_correctness"].value
       var listItem = "<li class=\"taken-excercise\">" 
-        + "<span class=\"name\">" + approach.composite["tub.eduzen.timeframe_note"].value + "</span><br/>"
-        + "<span class=\"state " + approach.composite["tub.eduzen.approach_correctness"].value
-        + " \">Status: " + approach.composite["tub.eduzen.approach_correctness"].value + "</span>"
-        + "<span class=\"comments\"># Kommentare</span>&nbsp;"
+          + "<span class=\"name\" id=\""+ excercise.id +"\"><a id=\"a-"+ excercise.id +"\" href=\"#\">"+ name +"</a></span><br/>"
+          + "<span class=\"count\">"+ excercise.composite["tub.eduzen.approach"].length +"&nbsp;Versuch/e</span>"
+          + "<span class=\"state "+ state + "\">Status: "+ state +"</span>"
         + "</li>"
       $("#taken-excercises").append(listItem)
+      $("#"+ excercise.id).click(create_approach_handler(excercise))
+      $("#a-"+ excercise.id).click(create_approach_handler(excercise))
       if (aView.getFileContent(approach.id)) console.log("debug: render approach list_entry with file symbol..") // ###
+      
+      function create_approach_handler (excercise) {
+        return function (e) {
+          aView.currentExcercise = excercise
+          aView.renderExcerciseInfo()
+          var excerciseLink = aView.currentExcerciseText.id +"/excercise/"+ excercise.id // rel. without slash at start
+          window.location.href = excerciseLink // fixme, use push/pop history
+        }
+      }
     }
   }
 
-
+  /** 
+    * Rendering all tries for any given excercise-text and our current user
+    * TODO: "render" mission as accomplished, if the first approach was correct, otherwise render "in progress"
+    */
+  this.renderExcerciseInfo = function () {
+    var excercise = aView.currentExcercise
+    $("#content").html("<b class=\"label\">&Uuml;bungsverlauf zur Aufgabenstellung \""
+      + aView.currentExcerciseText.value +"\"</b><div id=\"approach-info\"><ul></ul></div>")
+    var approaches = excercise.composite["tub.eduzen.approach"]
+    // "tub.eduzen.approach_content" | "tub.eduzen.approach_correctness" | "tub.eduzen.timeframe_note"
+    var numberOfApproach = 1;
+    for (item in approaches ) {
+      var approach = approaches[item]
+      var timestamp = approach.composite["tub.eduzen.timeframe_note"].value
+      var state = approach.composite["tub.eduzen.approach_correctness"].value
+      var content = approach.composite["tub.eduzen.approach_content"].value
+      var comments = aView.getCommentsForApproach(approach.id)
+      /** var approachIs = "tub.eduzen.approach_undecided"
+      console.log("       loaded " + comments.total_count + " comments on this taken excercise (with approachId=" + approachId + ")")
+      if (comments.total_count > 0) {
+        aView.existingComments = comments
+        if(aView.hasCorrectComment(comments)) {
+          approachIs = "tub.eduzen.approach_correctness"
+          console.log("       comments speak, this taken excercise was correct. " + excercise.id)
+        }
+      } **/
+      var approachLink = excercise.id +"/approach/"+ approach.id
+      var listItem = "<li class=\"approach\">"
+          + "<span class=\"submitted\">"+ numberOfApproach + ". Versuch, eingereicht um <a id=\""+ approach.id +"\" href=\""
+            + approachLink +"\">"+ timestamp +"</a></span><br/>"
+          + "<div class=\"content\">"+ content + "</div>"
+          + "<span class=\"state "+ state + "\">Status: "+ state +"</span>"
+          + "<span class=\"comments\">"+ comments.total_count +"&nbsp;Kommentar/e</span>"
+        + "</li>"
+      $("#approach-info").append(listItem)
+      if (aView.getFileContent(approach.id)) console.log("debug: render approach list_entry with file symbol..") // ###
+    }
+  }
 
   /** 
    * Controler to take on an excercise with an approach 
@@ -344,27 +408,9 @@ var aView = new function () {
   /** Server Communications - Strictly persisting server and updating client side model **/
   /** Methods to access eduzen, deepamehta-core and accesscontrol REST-Services **/
 
-  this.loadExistingCommentsForExcercises = function () {
-    // personal state of excercise-text is determined by all taken excercises
-    for (item in aView.allExcercises) {
-      var excercise = dmc.get_topic_by_id(aView.allExcercises[item].id)
-      var approachId = excercise.composite["tub.eduzen.approach"][0].id
-      if (excercise.composite["tub.eduzen.approach"].length > 0) {
-        var comments = aView.getCommentsForApproach(approachId)
-        console.log("       loaded " + comments.total_count + " comments on this taken excercise (with approachId=" + approachId + ")")
-        if (comments.total_count > 0) {
-          aView.existingComments = comments
-          if(aView.hasCorrectComment(comments)) {
-            aView.isCorrect = true
-            aView.isUndecided = false
-            console.log("       comments speak, this taken excercise was correct. " + excercise.id)
-          }
-          console.log("       comments dont speak about state of this taken excercise. " + excercise.id)
-        }
-      } else {
-        throw new Error("The excercise was taken but no approach yet exists. That`s mad, should never happen.")
-      }
-    }
+  /** Make this work for a single excercise, state will of ET will be provided by an explicit server-method */
+  this.getStateOfApproach = function (approachId) {
+    // get sate of excercise/approach
   }
 
   /** implicit in model this is ..
@@ -377,7 +423,7 @@ var aView = new function () {
 
   this.loadExcercisesForExcerciseText = function(eTextId) {
     var usersExcercises = new Array()
-    // get excercises just by this author FIXME: assemble this on the server-side
+    // FIXME: assemble this on the server-side, get excercises just by this author
     if (!aView.tub) throw new Error("User has not a TUB Identity yet, skipping view.")
     var excercisesByUser = aView.getAllExcercisesByUser()
     // console.log("debug: user has taken " + allExcercisesByUser.total_count + " excercises in total")

@@ -64,27 +64,53 @@
     color: #000000;
 }
 
-.taken-excercise .state {
-    float: left;
-}
-
 .taken-excercise .comments {
     float: right;
 }
 
+.taken-excercise .name:hover {
+    border-left: 4px solid #C2C4C5;
+    cursor: pointer;
+}
+
+.taken-excercise .name {
+    border: 1px solid #C2C4C5; /** light, lime-green #9C0; **/
+    padding: 4px;
+    padding-left: 8px;
+}
+
+.taken-excercise .state {
+    padding-left: 10px;
+}
+
+.approach .content {
+    padding: 4px;
+}
+
+
+li.approach {
+    list-style-type: none;
+}
+
+.approach .name, 
+.approach .comments, 
+.approach .state, 
+.approach .submitted,
 .commenting-view .submitted-at, 
 .commenting-view .submitter,
 .taken-excercise .state,
+.taken-excercise .count,
 .taken-excercise .comments {
     color: #a8a8a8;
     font-size: 12px;
+    padding: 4px;
 }
 
 
 /** Layout/Padding/Spacing Definitions **/
 
 .eduzen br {
-    margin: 10px;
+    margin: 4px;
 }
 
 .eduzen .take.button {
@@ -117,11 +143,6 @@
     list-style-type: none;
 }
 
-.eduzen .taken-excercise {
-    border: 1px solid #123457;
-    padding: 4px; padding-left: 8px; padding-right: 8px;
-}
-
 .eduzen .options {
     
 }
@@ -142,7 +163,14 @@
     padding-left: 20px;
 }
 
+.eduzen li.taken-excercise {
+    margin-top: 20px;
+    margin-right: 40px;
+}
 
+.eduzen li.taken-excercise a {
+    border: 0px;
+}
 
 /** Various State Definitions **/
 

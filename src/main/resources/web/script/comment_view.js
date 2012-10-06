@@ -48,7 +48,7 @@ var cView = new function () {
       console.log("entry point => " + commands)
       var entity = commands[0]
       var excerciseId = undefined
-      if (entity === "comments") {
+      if (entity === "commenting") {
         console.log("load commenting-view for => " + cView.user.value)
         cView.initCommentingView()
       }
