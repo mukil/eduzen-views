@@ -133,11 +133,14 @@ var cView = new function () {
     var excercise = cView.currentExcercise
     var excerciseText = excercise.composite["tub.eduzen.excercise_text"]
     var excerciseObject = excercise.composite["tub.eduzen.excercise_object"]
+    var excerciseState = cView.getExcerciseState(excercise.id)
     // Page Header
     $(".title").html("Hi <a href=\"/eduzen/view/user/"
         + cView.user.id + "\" class=\"username\"> " + cView.user.value + "</a><b>. "
         + "Hier siehst du alle L&ouml;sungsvorschl&auml;ge die von einem/r NutzerIn zur "
-        + "Aufgabenstellng \""+ excerciseText.value +"\" eingereicht wurden.</b>")
+        + "Aufgabenstellung \""+ excerciseText.value +"\" eingereicht wurden. "
+        + "Die Aufgabenstellung ist \""+ dict.stateName(excerciseState.quest_state) + "\""
+        + ", die &Uuml;bung hat den Status \"" + dict.stateName(excerciseState.excercise_state) + "\"</b>")
     // Page Body
     $("#content").html("<b class=\"label\">Aufgabe</b><br/>" + excerciseObject.value +"<br/><br/>")
     $("#content").append("<b class=\"label\">&Uuml;bungsverlauf zur Aufgabenstellung: \""
@@ -182,39 +185,41 @@ var cView = new function () {
 
   this.renderCommentsForApproach = function(approach) {
     console.log("rendering all comments for approach .. ")
+    $("#content").append("<ul id=\"comment-list\">")
+    $("#comment-list").empty()
     var comments = cView.getCommentsForApproach(approach.id)
-    console.log("  loaded " + comments.total_count + " comments on this taken excercise (approach=" + approach.id + ")")
-      if (comments.total_count > 0) {
-        cView.existingComments = comments
-        $("#content").append("<ul id=\"comment-list\">")
-        for (c in comments.items) {
-          var comment = dmc.get_topic_by_id(comments.items[c].id, true)
-          var author = cView.getAuthorOfComment(comment.id).items[0]
-          author = (author == undefined) ? author = "anonymus" : author.value
-          var commentView = "<li class=\"comment\">"+ author +" sagt der Vorschlag ist "+ comment.value +"<br/>"
-            + comment.composite["tub.eduzen.comment_explanation"].value +"</li>"
-          $("#comment-list").append(commentView)
-        }
-      } else {
-        return undefined
+    if (comments.total_count > 0) {
+      cView.existingComments = comments
+      for (c in comments.items) {
+        var comment = dmc.get_topic_by_id(comments.items[c].id, true)
+        var author = cView.getAuthorOfComment(comment.id).items[0]
+        var explanation = comment.composite["tub.eduzen.comment_explanation"].value
+        author = (author == undefined) ? author = "anonymus" : author.value
+        var commentView = "<li class=\"comment\">"+ author +" sagt der Vorschlag ist "
+          + dict.stateName(comment.value) +"<br/>"
+          + explanation +"</li>"
+        $("#comment-list").append(commentView)
       }
+    } else {
+      return undefined
+    }
   }
 
   this.renderCommentFormForApproach = function(approach) {
-    var form = "<br/><br/><b class=\"label\">Inhalt deines Kommentars</b>"
+    $("#new-comment").remove()
+    var form = "<div id=\"new-comment\"><b class=\"label\">Inhalt deines Kommentars</b>"
       + "<form name=\"comment\" id=\"new-comment-form\" action=\"javascript:void(0);\">"
       + "<input class=\"inputfield\" type=\"text\" size=\"80\" rows=\"4\"></input><br/>"
-      + "<input class=\"is-correct\" type=\"checkbox\"><b class=\"is-correct label\">"
-      + "Den L&ouml;sungsvorschlag find ich korrekt.</b></input>"
+      + "<label for=\"is-correct\">Den L&ouml;sungsvorschlag find ich korrekt"
+      + "<input class=\"is-correct\" name=\"is-correct\" type=\"checkbox\"></input></label>"
       + "<input class=\"btn comment\" type=\"submit\" value=\"Kommentieren\"></input>"
-      + "</form>"
+      + "</form></div>"
     $("#content").append(form)
     $("#new-comment-form").submit(do_comment_handler(approach))
 
     function do_comment_handler(approach) {
       return function() {
-        var correctness = $("#new-comment-form .is-correct").val()
-        correctness = (correctness === "on") ? correctness = false : correctness = true
+        var correctness = $("#new-comment-form .is-correct").is(":checked")
         var value = $("#new-comment-form .inputfield").val()
         cView.doCommentApproach(approach, value, correctness)
       }
@@ -287,7 +292,7 @@ var cView = new function () {
   this.doCommentApproach = function(approach, value, isCorrect) {
     // ### FIXME: recheck for still-existing user
     console.log(" do comment this approiach wiht " + value)
-    // ### FIXME: strip input to database.. ;)
+    // ### FIXME: strip input to API.. ;)
     var newComment = { "type_uri": "tub.eduzen.comment", "composite": {
         "tub.eduzen.comment_correct": isCorrect,
         "tub.eduzen.comment_explanation": value
@@ -305,6 +310,7 @@ var cView = new function () {
     dmc.create_association(commentApproachModel)
     dmc.create_association(authorModel)
     console.log("    saved comment => " + isCorrect + "  approach: " + approach.id + " for author: " + cView.user.value)
+    cView.renderExcerciseApproachInfo()
   }
 
   this.loadExistingCommentsForExcercises = function (excerciseId) {

@@ -22,8 +22,8 @@
 
 /** Typo Module Definitions **/
 
-.eduzen .is-correct.label {
-    font-size: 12px;
+.eduzen .is-correct {
+    vertical-align: middle;
 }
 
 .eduzen a.button {
@@ -101,6 +101,13 @@ li.approach {
     list-style-type: none;
 }
 
+.eduzen li.comment {
+    border-left: 1px solid #0067c7;
+    margin-right: 40px;
+    padding-left: 10px;
+    color: #a8a8a8;
+}
+
 /** .approach .name,
 .approach .comments,
 .approach .state,
@@ -120,15 +127,6 @@ li.approach {
 
 .eduzen br {
     margin: 4px;
-}
-
-.eduzen .take.button {
-    margin-left: 25px;
-}
-
-.eduzen .take.button:active {
-    background-color: #fff;
-    color: #2272AD;
 }
 
 .eduzen #results {
@@ -219,16 +217,24 @@ li.approach {
     float: right;
 }
 
-
 .eduzen input.btn {
-    border: 1px solid #12B4D7;
+    border: 1px solid #0067c7;
+    background-color: #fff;
     padding: 8px;
 }
 
-
 .eduzen .btn:active {
-    border: 1px solid #12B4D7;
-    background-color: #12B4D7;
+    background-color: #0067c7;
+    color: #fff;
+}
+
+
+.eduzen .take.button {
+    margin-left: 25px;
+}
+
+.eduzen .take.button:active {
+    /** background-color: #fff; cannot be simply set like this contains radiant **/
     color: #fff;
 }
 
