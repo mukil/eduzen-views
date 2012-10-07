@@ -130,11 +130,12 @@ public class ExcerciseViewPlugin extends PluginActivator implements ExcerciseVie
     }
 
     @GET
-    @Path("/commenting")
+    @Path("/commenting/{param}")
     @Produces("text/html")
     @Override
-    public InputStream getCommentingView(@HeaderParam("Cookie") ClientState clientState) {
-        logger.info("loading eduzen commenting-view .. ");
+    public InputStream getCommentingView(@PathParam("param") String param, 
+        @HeaderParam("Cookie") ClientState clientState) {
+        logger.info("loading eduzen commenting-view for " + param);
         return invokeCommentView();
     }
 
@@ -144,7 +145,7 @@ public class ExcerciseViewPlugin extends PluginActivator implements ExcerciseVie
     @Override
     public InputStream getCommentingView(@PathParam("excerciseId") long excerciseId, 
         @HeaderParam("Cookie") ClientState clientState) {
-        logger.info("loading eduzen commenting-view .. for " + excerciseId);
+        logger.info("loading eduzen commenting-view for excercise " + excerciseId);
         return invokeCommentView();
     }
 

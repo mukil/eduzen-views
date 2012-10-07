@@ -27,9 +27,7 @@ var cView = new function () {
   // personal work history for this excercise-text
   this.allExcercises = new Array()
   this.existingComments = new Array()
-  // personal state of an excercise-text can be
-  // "tub.eduzen.approach_undecided" | "tub.eduzen.approach_correct" | "tub.eduzen.approach_wrong" | "new"
-  this.eTextState = {"uri": "new"}
+
 
 
   /** Main Approach View initialization controler **/
@@ -47,10 +45,19 @@ var cView = new function () {
       commands = entryUrl.substr(entryUrl.indexOf("view/") + 5).split("/")
       console.log("entry point => " + commands)
       var entity = commands[0]
+      var param = commands[1]
       var excerciseId = undefined
       if (entity === "commenting") {
-        console.log("load commenting-view for => " + cView.user.value)
-        cView.initCommentingView()
+        if (param === "excercise") {
+          if (commands[2] != undefined) {
+            excerciseId = commands[2]
+            cView.currentExcercise = dmc.get_topic_by_id(excerciseId, true)
+            // deep linking into excercise-info view
+            cView.renderExcerciseApproachInfo()
+            console.log("load commenting-view for excercise => " + excerciseId)
+          }
+        }
+        cView.initCommentingView(param, excerciseId)
       }
     } else {
       // render notification, "no privileges to use this interface"
@@ -58,16 +65,24 @@ var cView = new function () {
     }
   }
 
-  this.initCommentingView = function (topicalareaId, excerciseTextId) {
+  this.initCommentingView = function (param, excerciseId) {
     cView.renderHeader()
-    cView.allExcercises = cView.getAllExcercises()
-    cView.renderAllExcercises()
+    if (param === "excercise") {
+      console.log("load commenting-view for one specific excercise.. ")
+    } else if (param === "new"){
+      console.log("load commenting-view just with uncommented excercises.. ")
+    } else {
+      console.log("load commenting-view with all excercises.. ")
+      cView.allExcercises = cView.getAllExcercises()
+      cView.renderAllExcercises()
+    }
   }
 
   /** Rendering Methods - Strictly Control Flow, Model Handling and View Updates **/
 
   this.renderHeader = function () {
     $(".eduzen").addClass("commenting-view")
+    $("#bottom").hide() // hide notification bar
     cView.renderUser()
   }
 
@@ -76,28 +91,138 @@ var cView = new function () {
       // ### FIXME uView.renderLogin()
       $(".title").html("Bitte nutze zum einloggen vorerst die <a href=\"" 
         + host + authorClientURL + "\">Autorenoberfl&auml;che</a> und laden danach diese Seite erneut.")
-    } else {
-      $("#header").hide()
-      $(".info").html("Hi <a href=\"/eduzen/view/user/" + cView.user.id + "\" class=\"username\"> "
-        + cView.user.value + "</a>")
     }
   }
 
   /** Rendering all current submissions of any user **/
 
   this.renderAllExcercises = function () {
-    $("#header").append("<b class=\"label\">Eine Auflistung aller bisher eingereichten L&ouml;sungsvorschl&auml;ge</b>")
+    $(".title").html("Hi <a href=\"/eduzen/view/user/"
+        + cView.user.id + "\" class=\"btn username\"> "
+        + cView.user.value + "</a><b>. Hier siehst du eine Auflistung aller unkommentierten L&ouml;sungsvorschl&auml;ge.</b>")
     $("#header").show()
-    var itemList = "<ul>"
+    var itemList = "<ul id=\"all-excercises\">"
+    $(itemList).insertBefore("#bottom")
     for (item in cView.allExcercises) {
       var excercise = cView.allExcercises[item]
+      var numberOfApproaches = excercise.composite["tub.eduzen.approach"].length
       var submittedAt = excercise.composite["tub.eduzen.approach"][0].composite["tub.eduzen.timeframe_note"].value
       var submitter = cView.getSubmitterOfExcercise(excercise.id).value
-      itemList += "<li>" + excercise.value + "<span class=\"submitter\">"+ submitter +"</span> "
-        + "<span class=\"submitted-at\">submitted "+ submittedAt +"</span></li>"
+      var excerciseState = dict.stateName(cView.getExcerciseState(excercise.id).excercise_state)
+      var questState = dict.stateName(cView.getExcerciseState(excercise.id).quest_state)
+      var itemString = "<li class=\"taken-excercise\"><div class=\"name "+ excercise.id +"\"><span class=\"submitter\">"
+        + submitter +"</span><span class=\"count\">"+ numberOfApproaches +". Versuch</span>"
+        + "<span class=\"state\">&Uuml;bung: "+ excerciseState +"</span>"
+        + "<span class=\"quest-state\">Aufgabenstellung: "+ questState +"</span></div></li>"
+      $("#all-excercises").append(itemString)
+      $(".name."+ excercise.id).click(create_excercise_handler(excercise))
     }
-    itemList += "</ul>"
-    $(itemList).insertBefore("#bottom")
+    
+    function create_excercise_handler(excercise) {
+      return function () {
+        cView.showExcerciseInfo(excercise.id)
+      }
+    }
+  }
+
+  /** 
+    * Rendering all tries for any given excercise-text and our current user
+    * TODO: remove duplicated code from #approach_view.renderExcerciseInfo
+    */
+  this.renderExcerciseApproachInfo = function () {
+    var excercise = cView.currentExcercise
+    var excerciseText = excercise.composite["tub.eduzen.excercise_text"]
+    var excerciseObject = excercise.composite["tub.eduzen.excercise_object"]
+    // Page Header
+    $(".title").html("Hi <a href=\"/eduzen/view/user/"
+        + cView.user.id + "\" class=\"username\"> " + cView.user.value + "</a><b>. "
+        + "Hier siehst du alle L&ouml;sungsvorschl&auml;ge die von einem/r NutzerIn zur "
+        + "Aufgabenstellng \""+ excerciseText.value +"\" eingereicht wurden.</b>")
+    // Page Body
+    $("#content").html("<b class=\"label\">Aufgabe</b><br/>" + excerciseObject.value +"<br/><br/>")
+    $("#content").append("<b class=\"label\">&Uuml;bungsverlauf zur Aufgabenstellung: \""
+      + excerciseText.value +"\"</b><div id=\"approach-info\"><ul></ul></div>")
+    var approaches = excercise.composite["tub.eduzen.approach"]
+    // "tub.eduzen.approach_content" | "tub.eduzen.approach_correctness" | "tub.eduzen.timeframe_note"
+    var numberOfApproach = 1;
+    for (item in approaches ) {
+      var approach = approaches[item]
+      var timestamp = approach.composite["tub.eduzen.timeframe_note"].value
+      var state = approach.composite["tub.eduzen.approach_correctness"].value
+      var content = approach.composite["tub.eduzen.approach_content"].value
+      var comments = cView.getCommentsForApproach(approach.id)
+      var approachLink = excercise.id +"/approach/"+ approach.id
+      // Page Item
+      var commentsLink = "<a href=\"#\" class=\"btn "+ approach.id +" comment\" alt=\"Neues Kommentar verfassen\""
+        + "title=\"Neues Kommentar verfassen\">Neues Kommentar verfassen</a>"
+      if (comments.total_count > 0) {
+        commentsLink = "<a href=\"#\" class=\"btn "+ approach.id +" comment\" alt=\"Alle Kommentare anzeigen\""
+        + "title=\"Alle Kommentare anzeigen\">Alle Kommentare anzeigen</a>"
+      }
+      var listItem = "<li class=\"approach\">"
+          + "<span class=\"submitted\">"+ numberOfApproach +". Versuch, eingereicht um <a id=\""+ approach.id +"\" href=\""
+            + approachLink +"\">"+ timestamp +"</a></span>"
+          + "<span class=\"state "+ state + "\">Status: "+ state +"</span><br/>"
+          + "<div class=\"content\">"+ content +"</div>"
+          + "<span class=\"comments\">"+ commentsLink +"</span>"
+        + "</li>"
+      $("#approach-info").append(listItem)
+      $(".btn."+ approach.id +".comment").click(create_comment_handler(approach))
+      if (cView.getFileContent(approach.id)) console.log("debug: render approach list_entry with file symbol..") // ###
+    }
+
+    function create_comment_handler (approach) {
+      return function(e) {
+        if (!cView.renderCommentsForApproach(approach)) {
+          cView.renderCommentFormForApproach(approach)
+        }
+      }
+    }
+  }
+
+  this.renderCommentsForApproach = function(approach) {
+    console.log("rendering all comments for approach .. ")
+    var comments = cView.getCommentsForApproach(approach.id)
+    console.log("  loaded " + comments.total_count + " comments on this taken excercise (approach=" + approach.id + ")")
+      if (comments.total_count > 0) {
+        cView.existingComments = comments
+        $("#content").append("<ul id=\"comment-list\">")
+        for (c in comments.items) {
+          var comment = dmc.get_topic_by_id(comments.items[c].id, true)
+          var author = cView.getAuthorOfComment(comment.id).items[0]
+          author = (author == undefined) ? author = "anonymus" : author.value
+          var commentView = "<li class=\"comment\">"+ author +" sagt der Vorschlag ist "+ comment.value +"<br/>"
+            + comment.composite["tub.eduzen.comment_explanation"].value +"</li>"
+          $("#comment-list").append(commentView)
+        }
+      } else {
+        return undefined
+      }
+  }
+
+  this.renderCommentFormForApproach = function(approach) {
+    var form = "<br/><br/><b class=\"label\">Inhalt deines Kommentars</b>"
+      + "<form name=\"comment\" id=\"new-comment-form\" action=\"javascript:void(0);\">"
+      + "<input class=\"inputfield\" type=\"text\" size=\"80\" rows=\"4\"></input><br/>"
+      + "<input class=\"is-correct\" type=\"checkbox\"><b class=\"is-correct label\">"
+      + "Den L&ouml;sungsvorschlag find ich korrekt.</b></input>"
+      + "<input class=\"btn comment\" type=\"submit\" value=\"Kommentieren\"></input>"
+      + "</form>"
+    $("#content").append(form)
+    $("#new-comment-form").submit(do_comment_handler(approach))
+
+    function do_comment_handler(approach) {
+      return function() {
+        var correctness = $("#new-comment-form .is-correct").val()
+        correctness = (correctness === "on") ? correctness = false : correctness = true
+        var value = $("#new-comment-form .inputfield").val()
+        cView.doCommentApproach(approach, value, correctness)
+      }
+    }
+  }
+
+  this.showExcerciseInfo = function (eId, uId) {
+    window.location.href = host + "/eduzen/view/commenting/excercise/" + eId
   }
 
   /** Rendering all tries for any given excercise-text and our current user **/
@@ -108,7 +233,7 @@ var cView = new function () {
       var excercise = dmc.get_topic_by_id(cView.allExcercises[item].id)
       var approach = excercise.composite["tub.eduzen.approach"][0] // ### FIXME: approaches should not be many here
       // "tub.eduzen.approach_content" | "tub.eduzen.approach_correctness" | "tub.eduzen.timeframe_note"
-      var listItem = "<li class=\"taken-excercise\">" 
+      var listItem = "<li class=\"taken-excercise\">"
         + "<span class=\"name\">" + approach.composite["tub.eduzen.timeframe_note"].value + "</span><br/>"
         + "<span class=\"state " + approach.composite["tub.eduzen.approach_correctness"].value
         + " \">Status: " + approach.composite["tub.eduzen.approach_correctness"].value + "</span>"
@@ -159,8 +284,31 @@ var cView = new function () {
   /** Server Communications - Strictly persisting server and updating client side model **/
   /** Methods to access eduzen, deepamehta-core and accesscontrol REST-Services **/
 
-  this.loadExistingCommentsForExcercises = function (excerciseId) {
+  this.doCommentApproach = function(approach, value, isCorrect) {
+    // ### FIXME: recheck for still-existing user
+    console.log(" do comment this approiach wiht " + value)
+    // ### FIXME: strip input to database.. ;)
+    var newComment = { "type_uri": "tub.eduzen.comment", "composite": {
+        "tub.eduzen.comment_correct": isCorrect,
+        "tub.eduzen.comment_explanation": value
+    }}
+    var savedComment = dmc.create_topic(newComment)
+    if (savedComment == undefined) throw new Error("Something mad happened.")
+    var commentApproachModel = { "type_uri":"dm4.core.composition", 
+      "role_1":{"topic_id":approach.id, "role_type_uri":"dm4.core.whole"},
+      "role_2":{"topic_id":savedComment.id, "role_type_uri":"dm4.core.part"}
+    }
+    var authorModel = { "type_uri":"tub.eduzen.author", 
+      "role_1":{"topic_id":savedComment.id, "role_type_uri":"dm4.core.default"},
+      "role_2":{"topic_id":cView.user.id, "role_type_uri":"dm4.core.default"}
+    }
+    dmc.create_association(commentApproachModel)
+    dmc.create_association(authorModel)
+    console.log("    saved comment => " + isCorrect + "  approach: " + approach.id + " for author: " + cView.user.value)
+  }
 
+  this.loadExistingCommentsForExcercises = function (excerciseId) {
+    // presumably unused atm
     var excercise = dmc.get_topic_by_id(excerciseId)
     var approachId = excercise.composite["tub.eduzen.approach"][0].id
     if (excercise.composite["tub.eduzen.approach"].length > 0) {
@@ -218,9 +366,18 @@ var cView = new function () {
     return (excercises.total_count > 0) ? excercises.items : undefined
   }
 
+  this.getExcerciseState = function(excerciseId) {
+    return dmc.request("GET", "/eduzen/state/excercise/"+ excerciseId, undefined, undefined, undefined, false)
+  }
+
   this.getCommentsForApproach = function (approachId) {
     return dmc.get_topic_related_topics(approachId,
       {"others_topic_type_uri": "tub.eduzen.comment", "assoc_type_uri": "dm4.core.composition"})
+  }
+
+  this.getAuthorOfComment = function (commentId) {
+    return dmc.get_topic_related_topics(commentId,
+      {"others_topic_type_uri": "dm4.accesscontrol.username", "assoc_type_uri": "tub.eduzen.author"})
   }
 
   this.getFileContent = function (topicId) {

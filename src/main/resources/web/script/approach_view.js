@@ -23,6 +23,7 @@ var aView = new function () {
   this.currentLectureId = undefined // FIXME: move to uView, support many
   this.currentExcercise = undefined
   this.currentExcerciseObject = undefined
+  // an excercise can haz many approaches, so this is only set if _one_ approach is in detail-view
   this.currentApproach = undefined
   this.currentFileApproach = undefined
   // personal work history for this excercise-text
@@ -84,13 +85,15 @@ var aView = new function () {
         aView.currentExcerciseText = dmc.get_topic_by_id(excerciseTextId, true)
         if (excerciseId != undefined) {
           aView.currentExcercise = dmc.get_topic_by_id(excerciseId, true)
+          // TODO: handle: if user has already taken this excercise-text but not submitted an approach yet.
           // deep linking into excercise-info view
-          aView.renderExcerciseInfo()
+          aView.renderExcerciseApproachInfo()
         } else {
           // deep linking into excercise-text overview, fetch excercise-history
           aView.loadExcercisesForExcerciseText(excerciseTextId)
           // render excercise-text with all taken excercises
-          aView.renderExcerciseText() // current excercise was set by url
+          // at this stage, excercise-text is not taken
+          aView.renderExcerciseText() // current excercise-text was set by url
         }
       } else {
         // ### or all other excercises from within our current topicalarea
@@ -120,6 +123,7 @@ var aView = new function () {
 
   this.renderHeader = function () {
       $(".eduzen").addClass("approach-view")
+      $("#bottom").hide() // hide notification bar
       aView.renderUser()
   }
 
@@ -129,9 +133,12 @@ var aView = new function () {
       $(".title").html("Bitte nutze zum einloggen vorerst die <a href=\"" 
         + host + authorClientURL + "\">Autorenoberfl&auml;che</a> und laden danach diese Seite erneut.")
     } else {
-      $("#header").hide()
-      $(".info").html("Hi <a href=\"/eduzen/view/user/" + aView.user.id + "\" class=\"username\"> "
-        + aView.user.value + "</a>")
+      $(".title").append("Hi <a href=\"/eduzen/view/user/"
+        + aView.user.id + "\" class=\"btn username\"> "
+        + aView.user.value + "</a>. Du kannst eine &Uuml;bung beginnen indem du eine "
+        + "Aufgabe annimmst. Um die Aufgabenstellung erfolgreich "
+        + "zu absolvieren, musst du den L&ouml;sungsvorschlag im 1. Anlauf "
+        + "korrekt einreichen. Aktuell kannst du so viel Versuche einreichen, wie wir neue Aufgaben f&uuml;r dich haben.")
     }
   }
 
@@ -141,19 +148,18 @@ var aView = new function () {
     var eText = aView.currentExcerciseText.composite["tub.eduzen.excercise_description"].value
     var approaches = undefined
   
-    $("<b class=\"label\">Hier ist die Aufgabenstellung \"" + eName + "\"</b><br/><br/>").insertBefore("#bottom")
+    $("<b class=\"label\">Ok, die Aufgabenstellung f&uuml;r \"" + eName + "\" lautet:</b><br/><br/>").insertBefore("#bottom")
     $("<div class=\"excercise-text\">"
       + eText + "</div><br/><br/>").insertBefore("#bottom")
     // 
     // add submission button
     $("#content").append("<a class=\"button takeon\" href=\"javascript:aView.handleExcerciseAndApproach()\"" 
-      + " alt=\"Aufgabenstellung entgegennehmen\" title=\"Aufgabenstellung entgegennehmen\">"
-      + "Aufgabenstellung entgegennehmen</a><br/><br/>")
-    // if user had already the joy to meet this excercise-text
+      + " alt=\"Aufgabe annehmen\" title=\"Aufgabe annehmen\">Aufgabe annehmen</a><br/><br/>")
+    // ### if our user had already the joy to meet this excercise-text, present his/her excercise
     if (aView.allExcercises.length > 0) {
       $("#content").append("<br/><b class=\"label\">Historie</b> Du hast bisher "+ + aView.allExcercises.length 
         + " &Uuml;bungen zu dieser Aufgabenstellung bearbeitet")
-      aView.renderExcerciseHistory()
+      aView.renderExcerciseHistoryForUser()
     }
   }
 
@@ -210,13 +216,12 @@ var aView = new function () {
   }
 
   /** Rendering all tries for any given excercise-text and our current user **/
-  this.renderExcerciseHistory = function () {
+  this.renderExcerciseHistoryForUser = function () {
     $("#content").append("<ul id=\"taken-excercises\">")
     for (item in aView.allExcercises) {
       var excercise = dmc.get_topic_by_id(aView.allExcercises[item].id)
       // use the first approach representing a taken-excercise
-      var approach = excercise.composite["tub.eduzen.approach"][0]      
-      // "tub.eduzen.approach_content" | "tub.eduzen.approach_correctness" | "tub.eduzen.timeframe_note"
+      var approach = excercise.composite["tub.eduzen.approach"][0]
       var name = approach.composite["tub.eduzen.timeframe_note"].value
       var state = approach.composite["tub.eduzen.approach_correctness"].value
       var listItem = "<li class=\"taken-excercise\">" 
@@ -232,7 +237,7 @@ var aView = new function () {
       function create_approach_handler (excercise) {
         return function (e) {
           aView.currentExcercise = excercise
-          aView.renderExcerciseInfo()
+          aView.renderExcerciseApproachInfo()
           var excerciseLink = aView.currentExcerciseText.id +"/excercise/"+ excercise.id // rel. without slash at start
           window.location.href = excerciseLink // fixme, use push/pop history
         }
@@ -243,11 +248,21 @@ var aView = new function () {
   /** 
     * Rendering all tries for any given excercise-text and our current user
     * TODO: "render" mission as accomplished, if the first approach was correct, otherwise render "in progress"
+    * TODO: remove duplicated code from #comment_view.renderExcerciseInfo
     */
-  this.renderExcerciseInfo = function () {
+  this.renderExcerciseApproachInfo = function () {
     var excercise = aView.currentExcercise
-    $("#content").html("<b class=\"label\">&Uuml;bungsverlauf zur Aufgabenstellung \""
-      + aView.currentExcerciseText.value +"\"</b><div id=\"approach-info\"><ul></ul></div>")
+    var excerciseText = excercise.composite["tub.eduzen.excercise_text"]
+    var excerciseObject = excercise.composite["tub.eduzen.excercise_object"]
+    // Page Header
+    $(".title").html("Hi <a href=\"/eduzen/view/user/"
+        + aView.user.id + "\" class=\"username\"> " + aView.user.value + "</a><b>. "
+        + "Hier siehst du alle L&ouml;sungsvorschl&auml;ge die von einem/r NutzerIn zur "
+        + "Aufgabenstellng \""+ excerciseText.value +"\" eingereicht wurden.</b>")
+    // Page Body
+    $("#content").html("<b class=\"label\">Aufgabe</b><br/>" + excerciseObject.value +"<br/><br/>")
+    $("#content").append("<b class=\"label\">&Uuml;bungsverlauf zur Aufgabenstellung: \""
+      + excerciseText.value +"\"</b><div id=\"approach-info\"><ul></ul></div>")
     var approaches = excercise.composite["tub.eduzen.approach"]
     // "tub.eduzen.approach_content" | "tub.eduzen.approach_correctness" | "tub.eduzen.timeframe_note"
     var numberOfApproach = 1;
@@ -257,26 +272,56 @@ var aView = new function () {
       var state = approach.composite["tub.eduzen.approach_correctness"].value
       var content = approach.composite["tub.eduzen.approach_content"].value
       var comments = aView.getCommentsForApproach(approach.id)
-      /** var approachIs = "tub.eduzen.approach_undecided"
-      console.log("       loaded " + comments.total_count + " comments on this taken excercise (with approachId=" + approachId + ")")
+      var approachLink = excercise.id +"/approach/"+ approach.id
+      // Page Item
+      var commentsLink = "<a href=\"#\" class=\"btn "+ approach.id +" comment\" alt=\"Neues Kommentar verfassen\""
+        + "title=\"Neues Kommentar verfassen\">Neues Kommentar verfassen</a>"
+      if (comments.total_count > 0) {
+        commentsLink = "<a href=\"#\" class=\"btn "+ approach.id +" comment\" alt=\"Alle Kommentare anzeigen\""
+        + "title=\"Alle Kommentare anzeigen\">Alle Kommentare anzeigen</a>"
+      }
+      var listItem = "<li class=\"approach\">"
+          + "<span class=\"submitted\">"+ numberOfApproach +". Versuch, eingereicht um <a id=\""+ approach.id +"\" href=\""
+            + approachLink +"\">"+ timestamp +"</a></span><br/>"
+          + "<div class=\"content\">"+ content +"</div>"
+          + "<span class=\"state "+ state + "\">Status: "+ state +"</span>"
+          + "<span class=\"comments\">"+ commentsLink +"</span>"
+        + "</li>"
+      $("#approach-info").append(listItem)
+      $(".btn."+ approach.id +".comment").click(create_comment_handler(approach))
+      if (aView.getFileContent(approach.id)) console.log("debug: render approach list_entry with file symbol..") // ###
+    }
+
+    function create_comment_handler (approach) {
+      return function(e) {
+        if (!aView.renderCommentsForApproach(approach)) {
+          aView.renderCommentFormForApproach(approach)
+        }
+      }
+    }
+  }
+
+  this.renderCommentsForApproach = function(approach) {
+    console.log("rendering all comments for approach .. ")
+    var comments = aView.getCommentsForApproach(approach.id)
+    console.log("  loaded " + comments.total_count + " comments on this taken excercise (approach=" + approach.id + ")")
       if (comments.total_count > 0) {
         aView.existingComments = comments
         if(aView.hasCorrectComment(comments)) {
-          approachIs = "tub.eduzen.approach_correctness"
-          console.log("       comments speak, this taken excercise was correct. " + excercise.id)
+          aView.isCorrect = true
+          aView.isUndecided = false
+          console.log("  comments speak, this taken excercise was correct. " + excercise.id)
         }
-      } **/
-      var approachLink = excercise.id +"/approach/"+ approach.id
-      var listItem = "<li class=\"approach\">"
-          + "<span class=\"submitted\">"+ numberOfApproach + ". Versuch, eingereicht um <a id=\""+ approach.id +"\" href=\""
-            + approachLink +"\">"+ timestamp +"</a></span><br/>"
-          + "<div class=\"content\">"+ content + "</div>"
-          + "<span class=\"state "+ state + "\">Status: "+ state +"</span>"
-          + "<span class=\"comments\">"+ comments.total_count +"&nbsp;Kommentar/e</span>"
-        + "</li>"
-      $("#approach-info").append(listItem)
-      if (aView.getFileContent(approach.id)) console.log("debug: render approach list_entry with file symbol..") // ###
-    }
+        console.log("  comments dont speak about state of this taken excercise. " + excercise.id)
+      } else {
+        return undefined
+      }
+  }
+
+  this.renderCommentFormForApproach = function(approach) {
+    console.log("rendering new comment form for approach .. ")
+    var form = "Mein neues Kommentar steht hier.."
+    $("#content").append()
   }
 
   /** 
@@ -371,6 +416,8 @@ var aView = new function () {
   this.handleExcerciseAndApproach = function () {
     // get an excercise-object if available and display it along with an approach form
     $(".button.takeon").remove()
+    // TODO: REST-Service Methode to deliver a proper excercise-object for this exercise-text and this user,
+    // TODO: and to create a new Excercise to persist whihc excercise the user has already seen for this e-text
     // if we have at least one excercise-object, we assume users have to take it.
     var eObject = aView.getExcerciseObject(aView.currentExcerciseText.id)
     if (eObject == undefined) {

@@ -69,6 +69,7 @@ var eView = new function () {
   }
 
   this.renderHeader = function () {
+      $(".eduzen").addClass("lecture-view")
       eView.renderUser()
   }
 
@@ -78,7 +79,7 @@ var eView = new function () {
       $(".title").html("Bitte nutzen Sie zum einloggen vorerst die <a href=\"" 
         + host + authorClientURL + "\">Autorenoberfl&auml;che</a> und laden danach diese Seite erneut.")
     } else {
-      $(".title").html("Hi <a href=\"/eduzen/view/user/" + eView.user.id + "\" class=\"username\"> "
+      $(".title").html("Hi <a href=\"/eduzen/view/user/" + eView.user.id + "\" class=\"btn username\"> "
         + eView.user.value + "</a>, ")
     }
   }
@@ -122,7 +123,7 @@ var eView = new function () {
 
   /** Controler to take on an excercise **/
 
-  this.showExcerciseForUser = function (eId, uId) {
+  this.showExcerciseTextForUser = function (eId, uId) {
     console.log("excerciseId => " + eId + " userId => " + uId)
     window.location.href = host + "/eduzen/view/lecture/" + eView.currentLecture.id
       + "/topicalarea/" + eView.currentTopicalarea.id + "/etext/" + eId
@@ -173,9 +174,9 @@ var eView = new function () {
       var e_text = excercise_texts[i]
       var excercise_text = dmc.get_topic_by_id(e_text.id, true)
       $("#result-list").append("<li id=\"" + excercise_text.id + "\" class=\"excercise\">"
-        + excercise_text.value + "<span class=\"take button\" alt=\"Aufgabenstellung anzeigen\""
-        + " title=\"Aufgabenstellung anzeigen\">Aufgabenstellung anzeigen</a></li>")
-      $("li#" + excercise_text.id + " .take.button").click(eView.createExcerciseHandler(excercise_text))
+        + excercise_text.value + "<span class=\"take button\" alt=\"Ansehen\""
+        + " title=\"Ansehen\">Ansehen</a></li>")
+      $("li#" + excercise_text.id + " .take.button").click(eView.createExcerciseTextHandler(excercise_text))
     }
     $("#result-list").addClass("excercise_texts")
   }
@@ -217,8 +218,7 @@ var eView = new function () {
       }
       // ### selectSampleSolution to display, dont display the wrong one, and display not more than one
       if (hasSampleSolution) {
-        console.log("INFO: yay, we`ve a sample-solution to show to our newbies, it`s on ET => " + e_text.id)
-        console.log(sampleApproach)
+        // FIXME: load example solution
         e_text = dmc.get_topic_by_id(e_text.id)
         var e_text_descr = e_text.composite["tub.eduzen.excercise_description"].value
         var sample_content = sampleApproach.composite["tub.eduzen.approach_content"].value
@@ -231,9 +231,9 @@ var eView = new function () {
     }
   }
 
-  this.createExcerciseHandler = function (e_text) {
+  this.createExcerciseTextHandler = function (e_text) {
       return function() {
-        eView.showExcerciseForUser(e_text.id, eView.user.id)
+        eView.showExcerciseTextForUser(e_text.id, eView.user.id)
       }
   }
 

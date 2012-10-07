@@ -29,7 +29,7 @@ public interface ExcerciseViewService extends PluginService {
 
     InputStream getSubmittedApproachesView(ClientState clientState);
 
-    InputStream getCommentingView(ClientState clientState);
+    InputStream getCommentingView(String parameter, ClientState clientState);
 
     InputStream getCommentingView(long excerciseId, ClientState clientState);
 
