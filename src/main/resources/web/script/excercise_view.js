@@ -13,14 +13,14 @@ var eView = new function () {
   this.historyApiSupported = window.history.pushState
   this.insertDummyContents = false
   this.user = undefined
-  this.defaultLecture = 424014 // Lecture of Mathematik 1 für ChemikerInnen
+  this.defaultLecture = 130485 // Lecture of Mathematik 1 für ChemikerInnen
   this.currentLecture = undefined
   this.currentTopicalareas = new Array()
   this.currentTopicalarea = undefined
 
   /** Excercise View Application Controler **/
 
-  this.initViews = function () { 
+  this.initViews = function () {
     // This view routes on "lecture/423515/topicalarea/68429", "lecture/423515/" and "/start"
 
     eView.user = eView.getCurrentUser()
@@ -37,10 +37,8 @@ var eView = new function () {
     var topicalareaId = undefined
 
     if (entity === "lecture") {
-      console.log("load lecture-view for => " + id)
       if (commands[2] === "topicalarea") {
         topicalareaId = commands[3]
-        console.log("  load topicalarea-view for => " + topicalareaId)
       }
       eView.initLectureView(id, topicalareaId)
     } else if (entity === "start") {
@@ -57,9 +55,17 @@ var eView = new function () {
       if (eView.user == undefined) throw new Error("Your user has no TUB Identity. Please login first.")
       eView.renderLecture()
       if (topicalareaId != undefined) {
+        // ### FIXME: check access if topicalarea is really part of this lecture
         eView.currentTopicalarea = dmc.get_topic_by_id(topicalareaId)
+        console.log("  load also topicalarea-view for => " + topicalareaId)
+        // ### eView.loadSomeContentForThisTopicalarea()
+        // ### eView.renderSomeContentForThisTopicalarea()
         eView.renderTopicalarea()
+        // load excercise-texts for this topicalarea
+        // ### eView.loadExcerciseTextsForTopicalarea()
+        // ### eView.renderExcerciseText()
       } else { // render all topicalareas
+        console.log("load lecture-view for => " + lectureId)
         eView.currentTopicalareas = eView.loadTopicalAreasByLV(eView.currentLecture.id).items
         if (eView.currentTopicalareas != undefined) {
           eView.renderTopicalareas()
@@ -85,9 +91,10 @@ var eView = new function () {
   }
 
   this.renderLecture = function () {
+    var courseName = eView.getNameOfCourse(eView.currentLecture.id).items[0].value
     $(".title").append("hier findest du &Uuml;bungs- und Beispielaufgaben zu deiner" 
       + " Lehrveranstaltung <a href=\"/eduzen/view/lecture/" + eView.currentLecture.id
-      + "\" class=\"lecturename\">" + eView.currentLecture.value + "</a>")
+      + "\" class=\"lecturename\">"+ courseName +" / "+ eView.currentLecture.value +"</a>")
   }
 
   this.renderTopicalareas = function () {
@@ -114,8 +121,6 @@ var eView = new function () {
       + eView.currentTopicalarea.id + "\" class=\"topicalareaname selected\" title=\"Themenkomplex: "
       + tpName + "\" alt=\"" + tpName + "\">" + tpName + "</a></p>"
     $("#header").append(backtopic)
-    eView.loadSampleExcerciseTextsForTopicalarea()
-    // ### eView.loadSomeContentForThisTopicalarea()
     // load excercise-texts for this topicalarea
     eView.loadExcerciseTextsForTopicalarea()
     // eView.renderExcerciseText()
@@ -146,27 +151,26 @@ var eView = new function () {
 
   this.loadTopicalAreasByLV = function(id) {
     return dmc.get_topic_related_topics(id, {"others_topic_type_uri": "tub.eduzen.topicalarea", 
-      "assoc_type_uri": "tub.eduzen.lecture_content_topicalarea"})
+      "assoc_type_uri": "tub.eduzen.lecture_content"})
   }
 
   this.loadExcerciseTextsForTopicalarea = function () {
     // load association between lecture and topicalarea
-    // FIXME: an ET could be many times lecture_content?
-    var contentAssociation = dmc.get_association("tub.eduzen.lecture_content_topicalarea", 
+    // FIXME: an ET could be many times lecture_content? as soon as we support multiple-lectures
+    var contentAssociation = dmc.get_association("tub.eduzen.lecture_content", 
       eView.currentLecture.id, eView.currentTopicalarea.id, "dm4.core.default", "dm4.core.default", true)
-    console.log(contentAssociation)
-
     var excercise_texts = dmc.get_association_related_topics(contentAssociation.id, 
       { "others_topic_type_uri": "tub.eduzen.excercise_text" }).items
+
     if (excercise_texts.length > 1) {
-      $("<p class=\"buffer\"><b class=\"label\">Versuch`s mal selbst mit einer der "
-        + excercise_texts.length + " &Uuml;bungsaufgaben</b></p>").insertBefore("#result-list")
+      $("<p class=\"buffer\"><b class=\"label\">Das sind die "
+        + excercise_texts.length + " Aufgabenstellung/en zum meistern dieses Themenkomplexes</b></p>").insertBefore("#result-list")
     } else if (excercise_texts.length == 1) {
-      $("<p class=\"buffer\"><b class=\"label\">Versuch`s mal selbst mit der &Uuml;bungsaufgabe</b></p>")
+      $("<p class=\"buffer\"><b class=\"label\">Hier ist die Aufgabenstellung zum meistern dieses Themenkomplexes</b></p>")
         .insertBefore("#result-list")
     } else {
-      $("<p class=\"buffer\"><b class=\"label\">Es wurden leider noch keine &Uuml;bungsaufgaben "
-        + " f&uuml;r diesen Themenkomplex in deiner Lehrveranstaltung eingestellt.</b></p>")
+      $("<p class=\"buffer\"><b class=\"label\">Es wurden leider noch keine Aufgabenstellungen "
+        + " f&uuml;r diesen Themenkomplex in deiner Lehrveranstaltung definiert.</b></p>")
         .insertBefore("#result-list")
     }
     
@@ -179,56 +183,6 @@ var eView = new function () {
       $("li#" + excercise_text.id + " .take.button").click(eView.createExcerciseTextHandler(excercise_text))
     }
     $("#result-list").addClass("excercise_texts")
-  }
-
-  this.loadSampleExcerciseTextsForTopicalarea = function () {
-    // FIXME make sure this is none of the excercise-texts assigned for this topicalarea in this lecture..
-    var contentAssociation = dmc.get_association("tub.eduzen.lecture_content_topicalarea", 
-      eView.currentLecture.id, eView.currentTopicalarea.id, "dm4.core.default", "dm4.core.default", true)
-    var excercise_texts = dmc.get_association_related_topics(contentAssociation.id, 
-      { "others_topic_type_uri": "tub.eduzen.excercise_text", 
-        "assoc_type_uri": "tub.eduzen.lecture_content_excercise"}).items
-    var sampleApproach = undefined
-    for (i = 0; i < excercise_texts.length; i++) {
-      var e_text = excercise_texts[i]
-      // search for each ET if theres an excercise already taken and a sample approach available
-      var hasSampleSolution = false
-      var excercises = dmc.get_topic_related_topics(e_text.id, {"others_topic_type_uri": "tub.eduzen.excercise"})
-      if (excercises.total_count > 0) { //
-        // console.log(excercises.items.length + " times taken " + excerciseText.items[0].value + " excercise")
-        for (taken in excercises.items) { // get all approaches submitted to this excercise
-          var excerciseId = excercises.items[taken].id
-          var approaches = dmc.get_topic_related_topics(excerciseId, {"others_topic_type_uri": "tub.eduzen.approach"})
-          if (approaches.total_count > 0) { // find sample solutions..
-            for (a in approaches.items) { // get all approaches marked as sample solution
-              var approach = approaches.items[a]
-              approach = dmc.get_topic_by_id(approach.id, true)
-              // sanity check, some approaches have no value set here..
-              if (approach.composite["tub.eduzen.approach_sample"]) {
-                if (approach.composite["tub.eduzen.approach_sample"].value) {
-                  hasSampleSolution = true
-                  sampleApproach = approach
-                } 
-              }
-            }
-          } else {
-            console.log("WARNING: no approaches submitted for eText " + e_text.id)
-          }
-        }
-      }
-      // ### selectSampleSolution to display, dont display the wrong one, and display not more than one
-      if (hasSampleSolution) {
-        // FIXME: load example solution
-        e_text = dmc.get_topic_by_id(e_text.id)
-        var e_text_descr = e_text.composite["tub.eduzen.excercise_description"].value
-        var sample_content = sampleApproach.composite["tub.eduzen.approach_content"].value
-        var exampleHtml = "<p class=\"buffer\">"
-        exampleHtml += "<b class=\"label\">Hier mal eine Beispielaufgabe</b><br/><br/>"
-        exampleHtml += e_text_descr + "<br/><br/><b class=\"label\">"
-          + " Und hier ist der dazugeh&ouml;rige L&ouml;sungsansatz</b><br/><br/>" + sample_content  + "</b></p>"
-        $(exampleHtml).insertBefore("#result-list")
-      }
-    }
   }
 
   this.createExcerciseTextHandler = function (e_text) {
@@ -273,6 +227,11 @@ var eView = new function () {
       }
       dmc.create_association(assocModel4)
     }
+  }
+
+  this.getNameOfCourse = function (lectureId) {
+    return dmc.get_topic_related_topics(lectureId,
+      {"others_topic_type_uri": "tub.eduzen.course", "assoc_type_uri": "dm4.core.composition"})
   }
 
   this.getCurrentUser = function() {

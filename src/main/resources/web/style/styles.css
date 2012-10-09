@@ -40,6 +40,9 @@
     line-height: 1.6em;
 }
 
+.eduzen .title {
+    margin-right: 40px;
+}
 
 .eduzen .topicalareaname {
     text-decoration: none;
@@ -47,6 +50,11 @@
     color: #000;
     padding: 4px;
     margin: 4px;
+}
+
+.eduzen .topicalareaname:active {
+    background-color: #99cc00;
+    color: #fff;
 }
 
 .eduzen .back,
@@ -150,6 +158,7 @@ li.approach {
 
 /** Listing / List Item Options **/
 
+.eduzen .approach-list,
 .eduzen #taken-excercises,
 .eduzen #all-excercises {
     padding-left: 0px;
