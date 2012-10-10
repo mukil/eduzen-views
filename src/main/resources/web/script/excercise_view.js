@@ -4,14 +4,14 @@
 
 var host = "http://localhost:8080"
 var serviceURL = "/core"
-var authorClientURL = "/de.deepamehta.webclient"
+var authorClientURL = "/eduzen/view/user/123"
 var dmc = new RESTClient(host + serviceURL)
 var dict = new eduzenDictionary("DE")
+var user = new user()
 
 var eView = new function () {
 
   this.historyApiSupported = window.history.pushState
-  this.insertDummyContents = false
   this.user = undefined
   this.defaultLecture = 130485 // Lecture of Mathematik 1 für ChemikerInnen
   this.currentLecture = undefined
@@ -23,10 +23,6 @@ var eView = new function () {
   this.initViews = function () {
     // This view routes on "lecture/423515/topicalarea/68429", "lecture/423515/" and "/start"
 
-    eView.user = eView.getCurrentUser()
-    if (eView.user != undefined) {
-      eView.createSomeDummyExcerciseAssocs()
-    }
     // handling deep links
     var entryUrl = window.location.href
     entryUrl = entryUrl.substr(entryUrl.indexOf("view/") + 5)
@@ -52,47 +48,48 @@ var eView = new function () {
     eView.currentLecture = dmc.get_topic_by_id(lectureId, true)
     if (eView.currentLecture != undefined) {
       eView.renderHeader()
-      if (eView.user == undefined) throw new Error("Your user has no TUB Identity. Please login first.")
-      eView.renderLecture()
-      if (topicalareaId != undefined) {
-        // ### FIXME: check access if topicalarea is really part of this lecture
-        eView.currentTopicalarea = dmc.get_topic_by_id(topicalareaId)
-        console.log("  load also topicalarea-view for => " + topicalareaId)
-        // ### eView.loadSomeContentForThisTopicalarea()
-        // ### eView.renderSomeContentForThisTopicalarea()
-        eView.renderTopicalarea()
-        // load excercise-texts for this topicalarea
-        // ### eView.loadExcerciseTextsForTopicalarea()
-        // ### eView.renderExcerciseText()
-      } else { // render all topicalareas
-        console.log("load lecture-view for => " + lectureId)
-        eView.currentTopicalareas = eView.loadTopicalAreasByLV(eView.currentLecture.id).items
-        if (eView.currentTopicalareas != undefined) {
-          eView.renderTopicalareas()
+      if (user.identity == undefined) {
+        console.log("Please login first.")
+      } else {
+        eView.renderLecture()
+        if (topicalareaId != undefined) {
+          // ### FIXME: check access if topicalarea is really part of this lecture
+          eView.currentTopicalarea = dmc.get_topic_by_id(topicalareaId)
+          console.log("  load also topicalarea-view for => " + topicalareaId)
+          // ### eView.loadSomeContentForThisTopicalarea()
+          // ### eView.renderSomeContentForThisTopicalarea()
+          eView.renderTopicalarea()
+          // load excercise-texts for this topicalarea here, instead of having subsequent render/load/render calls
+          // ### eView.loadExcerciseTextsForTopicalarea()
+          // ### eView.renderExcerciseText()
+        } else { // render all topicalareas
+          console.log("load lecture-view for => " + lectureId)
+          eView.currentTopicalareas = eView.loadTopicalAreasByLV(eView.currentLecture.id).items
+          if (eView.currentTopicalareas != undefined) {
+            eView.renderTopicalareas()
+          }
         }
       }
     }
   }
 
   this.renderHeader = function () {
-      $(".eduzen").addClass("lecture-view")
+    $(".eduzen").addClass("lecture-view")
+    if (user.getCurrentUser() == undefined) {
+      user.renderLogin(eView)
+    } else {
       eView.renderUser()
+    }
   }
 
   this.renderUser = function () {
-    if (eView.user == undefined) {
-      // ### FIXME uView.renderLogin()
-      $(".title").html("Bitte nutzen Sie zum einloggen vorerst die <a href=\"" 
-        + host + authorClientURL + "\">Autorenoberfl&auml;che</a> und laden danach diese Seite erneut.")
-    } else {
-      $(".title").html("Hi <a href=\"/eduzen/view/user/" + eView.user.id + "\" class=\"btn username\"> "
-        + eView.user.value + "</a>, ")
-    }
+    $(".title").html("Hi <a href=\"/eduzen/view/user/" + user.user.id + "\" class=\"btn username\"> "
+      + user.user.value + "</a>.&nbsp;")
   }
 
   this.renderLecture = function () {
     var courseName = eView.getNameOfCourse(eView.currentLecture.id).items[0].value
-    $(".title").append("hier findest du &Uuml;bungs- und Beispielaufgaben zu deiner" 
+    $(".title").append("Hier findest du &Uuml;bungen zu deiner" 
       + " Lehrveranstaltung <a href=\"/eduzen/view/lecture/" + eView.currentLecture.id
       + "\" class=\"lecturename\">"+ courseName +" / "+ eView.currentLecture.value +"</a>")
   }
@@ -177,9 +174,13 @@ var eView = new function () {
     for (i = 0; i < excercise_texts.length; i++) {
       var e_text = excercise_texts[i]
       var excercise_text = dmc.get_topic_by_id(e_text.id, true)
+      var e_text_state = eView.getExcerciseTextState(e_text.id).status
+      console.log(" getting state for " + excercise_text.value + " id="+ e_text.id)
+      console.log(e_text_state)
       $("#result-list").append("<li id=\"" + excercise_text.id + "\" class=\"excercise\">"
         + excercise_text.value + "<span class=\"take button\" alt=\"Ansehen\""
-        + " title=\"Ansehen\">Ansehen</a></li>")
+        + " title=\"Ansehen\">Ansehen</span><span class=\"state "+e_text_state+"\">"
+        + dict.stateName(e_text_state) +"</span></li>")
       $("li#" + excercise_text.id + " .take.button").click(eView.createExcerciseTextHandler(excercise_text))
     }
     $("#result-list").addClass("excercise_texts")
@@ -187,13 +188,13 @@ var eView = new function () {
 
   this.createExcerciseTextHandler = function (e_text) {
       return function() {
-        eView.showExcerciseTextForUser(e_text.id, eView.user.id)
+        eView.showExcerciseTextForUser(e_text.id, user.user.id)
       }
   }
 
   this.createSomeDummyExcerciseAssocs = function () {
     if (eView.insertDummyContents) {
-      console.log("\"" + eView.user.value + "\" is creating associations per script to connect"
+      console.log("\"" + user.user.value + "\" is creating associations per script to connect"
         + " excercise_texts with lecture_content_* associations")
       // ### TKs LVI-Edge Elementare Funktionen: 429031 
       // TKs LVI-Edge Eigenschaften stetiger Funktionen: 431380
@@ -229,18 +230,13 @@ var eView = new function () {
     }
   }
 
+  this.getExcerciseTextState = function(id) {
+    return dmc.request("GET", "/eduzen/state/exercise-text/" + id, undefined, undefined, undefined, false)
+  }
+
   this.getNameOfCourse = function (lectureId) {
     return dmc.get_topic_related_topics(lectureId,
       {"others_topic_type_uri": "tub.eduzen.course", "assoc_type_uri": "dm4.core.composition"})
-  }
-
-  this.getCurrentUser = function() {
-    return dmc.request("GET", "/accesscontrol/user", undefined, undefined, undefined, false)
-  }
-
-  this.logout = function() {
-
-    return dmc.request("POST", "/accesscontrol/logout", undefined, undefined)
   }
 
 }
