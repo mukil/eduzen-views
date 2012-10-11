@@ -125,6 +125,10 @@ li.approach {
     list-style-type: none;
 }
 
+li.approach {
+    margin-top: 40px;
+}
+
 .eduzen li.comment {
     border-left: 1px solid #0067c7;
     margin-right: 40px;
