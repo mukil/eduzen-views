@@ -76,35 +76,48 @@ var cView = new function () {
       $("#menu").show()
       $("a.new").addClass("selected")
       $("a.inprogress, a.unapproached, a.all").removeClass("selected")
-      cView.allExcercises = cView.getAllNewExcercises()
-      cView.renderAllExcercises()
+      $("#header").append("<div class=\"runner\"></div>")
+
+      setTimeout(function(e) {
+        cView.allExcercises = cView.getAllNewExcercises()
+        cView.renderAllExcercises()
+      }, 100)
 
     } else if (param === "inprogress") {
       console.log("load commenting-view with all excercises having at least one approach uncommented.. ")
       $("#menu").show()
       $("a.inprogress").addClass("selected")
       $("a.new, a.unapproached, a.all").removeClass("selected")
+      $("#header").append("<div class=\"runner\"></div>")
 
-      cView.allExcercises = cView.getAllExcercisesWorkNeeded()
-      cView.renderAllExcercises()
+      setTimeout(function(e) {
+        cView.allExcercises = cView.getAllExcercisesWorkNeeded()
+        cView.renderAllExcercises()
+      }, 100)
 
     } else if (param === "unapproached") {
       console.log("load commenting-view with all excercises missing an approach.. ")
       $("#menu").show()
       $("a.unapproached").addClass("selected")
       $("a.new, a.inprogress, a.all").removeClass("selected")
+      $("#header").append("<div class=\"runner\"></div>")
 
-      cView.allExcercises = cView.getAllExcercisesNotApproached()
-      cView.renderUnapproachedExcercises()
+      setTimeout(function(e) {
+        cView.allExcercises = cView.getAllExcercisesNotApproached()
+        cView.renderUnapproachedExcercises()
+      }, 100)
 
     } else if (param === "all") {
       console.log("load commenting-view with all excercises having at least one approach uncommented.. ")
       $("#menu").show()
       $("a.all").addClass("selected")
       $("a.new, a.inprogress, a.unapproached").removeClass("selected")
+      $("#header").append("<div class=\"runner\"></div>")
 
-      cView.allExcercises = cView.getAllExcercisesTaken()
-      cView.renderAllExcercises()
+      setTimeout(function(e) {
+        cView.allExcercises = cView.getAllExcercisesTaken()
+        cView.renderAllExcercises()
+      }, 100)
 
     }
   }
@@ -133,17 +146,17 @@ var cView = new function () {
 
   this.renderAllExcercises = function () {
     $(".title").append("<p class=\"buffer\">Hi <a href=\"/eduzen/view/user/" + user.user.id + "\" class=\"btn username\"> "
-        + user.user.value + "</a><b>. Hier ist die &Uuml;bersicht zu allen angefangenen eduZEN-&Uuml;bungen.</b></p>")
-    $("#header").show()
+        + user.user.value + "</a><b>. Hier ist die &Uuml;bersicht zu allen angefangenen &Uuml;bungen.</b></p>")
     var itemList = "<ul id=\"all-excercises\">"
     $(itemList).insertBefore("#bottom")
-    for (item in cView.allExcercises) {
+    for (item in cView.allExcercises) { // we are currently at 2 ajax requests per result item (author & state)
       var excercise = cView.allExcercises[item]
       var numberOfApproaches = excercise.composite["tub.eduzen.approach"].length
       var submittedAt = excercise.composite["tub.eduzen.approach"][0].composite["tub.eduzen.timeframe_note"].value
       var submitter = cView.getSubmitterOfExcercise(excercise.id).value
-      var excerciseState = dict.stateName(cView.getExcerciseState(excercise.id).excercise_state)
-      var questState = dict.stateName(cView.getExcerciseState(excercise.id).quest_state)
+      var status = cView.getExcerciseState(excercise.id)
+      var excerciseState = dict.stateName(status.excercise_state)
+      var questState = dict.stateName(status.quest_state)
       var itemString = "<li class=\"taken-excercise\"><div class=\"name "+ excercise.id +"\"><span class=\"submitter\">"
         + submitter +"</span>&nbsp;&nbsp;&nbsp;<span class=\"count\">"+ numberOfApproaches +". Versuch</span>"
         + "<span class=\"state\">&Uuml;bung: "+ excerciseState +"</span>"
@@ -151,6 +164,7 @@ var cView = new function () {
       $("#all-excercises").append(itemString)
       $(".name."+ excercise.id).click(create_excercise_handler(excercise))
     }
+    $("#header .runner").remove()
     
     function create_excercise_handler(excercise) {
       return function () {
@@ -162,14 +176,14 @@ var cView = new function () {
   this.renderUnapproachedExcercises = function () {
     $(".title").append("<p class=\"buffer\">Hi <a href=\"/eduzen/view/user/" + user.user.id + "\" class=\"btn username\"> "
         + user.user.value + "</a><b>. Hier ist eine &Uuml;bersicht zu allen angefangenen &Uuml;bungen.</b></p>")
-    $("#header").show()
     var itemList = "<ul id=\"all-excercises\">"
     $(itemList).insertBefore("#bottom")
-    for (item in cView.allExcercises) {
+    for (item in cView.allExcercises) { // we are currently at 2 ajax requests per result item (author & state)
       var excercise = cView.allExcercises[item]
       var submitter = cView.getSubmitterOfExcercise(excercise.id).value
-      var excerciseState = dict.stateName(cView.getExcerciseState(excercise.id).excercise_state)
-      var questState = dict.stateName(cView.getExcerciseState(excercise.id).quest_state)
+      var status = cView.getExcerciseState(excercise.id)
+      var excerciseState = dict.stateName(status.excercise_state)
+      var questState = dict.stateName(status.quest_state)
       var itemString = "<li class=\"taken-excercise\"><div class=\"name "+ excercise.id +"\"><span class=\"submitter\">"
         + submitter +"</span>&nbsp;&nbsp;&nbsp;<span class=\"count\">Keine Versuche</span>"
         + "<span class=\"state\">&Uuml;bung: "+ excerciseState +"</span>"
@@ -177,6 +191,7 @@ var cView = new function () {
       $("#all-excercises").append(itemString)
       $(".name."+ excercise.id).click(create_excercise_handler(excercise))
     }
+    $("#header .runner").remove()
     
     function create_excercise_handler(excercise) {
       return function () {
@@ -203,6 +218,7 @@ var cView = new function () {
     * TODO: remove duplicated code from #approach_view.renderExcerciseInfo
     */
   this.renderExcerciseApproachInfo = function () {
+    $(".runner").hide()
     var excercise = cView.currentExcercise
     var excerciseText = excercise.composite["tub.eduzen.excercise_text"]
     var excerciseDescription = excerciseText.composite["tub.eduzen.excercise_description"]

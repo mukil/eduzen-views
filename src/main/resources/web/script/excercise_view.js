@@ -76,6 +76,7 @@ var eView = new function () {
   this.renderHeader = function () {
     $(".eduzen").addClass("lecture-view")
     if (user.getCurrentUser() == undefined) {
+      $("#content").empty()
       user.renderLogin(eView)
     } else {
       eView.renderUser()

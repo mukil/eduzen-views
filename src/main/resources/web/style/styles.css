@@ -340,6 +340,14 @@ body.eduzen {
     padding: 0px;
 }
 
+.eduzen .runner {
+    background-image: url('/de.tu-berlin.eduzen.task-views/images/ajaxload.info.drk.gif');
+    background-repeat: no-repeat;
+    width: 25px; height: 25px; display: hidden;
+    margin-left: 5px; margin-right: 5px;
+    position: fixed; top: 10px; right: 5px;
+}
+
 .eduzen.commenting-view #header {
     margin-bottom: 0px;
 }

@@ -82,18 +82,19 @@ var aView = new function () {
           aView.currentExcercise = dmc.get_topic_by_id(excerciseId, true)
           // TODO: handle: if user has already taken this excercise-text but not submitted an approach yet.
           console.log(" linking into excercise approach overview, fetch approach-history")
-          aView.renderHeader("excercise")
-          aView.renderExcerciseApproachInfo()
+          if (aView.renderHeader("excercise")) {
+            aView.renderExcerciseApproachInfo()
+          }
         } else {
           console.log(" linking into excercise-text overview, fetch excercise-history")
-          aView.renderHeader("excercise-text")
-          // 
-          aView.loadExcercisesForExcerciseText(excerciseTextId)
-          if (aView.isSampleApproachAvailable(excerciseTextId)) { 
-            aView.renderSampleSolutionForExcerciseText()
+          if (aView.renderHeader("excercise-text")) {
+            aView.loadExcercisesForExcerciseText(excerciseTextId)
+            if (aView.isSampleApproachAvailable(excerciseTextId)) { 
+              aView.renderSampleSolutionForExcerciseText()
+            }
+            // render excercise-text with all taken excercises
+            aView.renderExcerciseText() // with excercise-history, if present
           }
-          // render excercise-text with all taken excercises
-          aView.renderExcerciseText() // with excercise-history, if present
         }
       } else {
         // ### or all other excercises from within our current topicalarea
@@ -125,11 +126,14 @@ var aView = new function () {
     $(".eduzen").addClass("approach-view")
     $("#bottom").hide() // hide notification bar
     if (user.getCurrentUser() == undefined) {
+      $("#content").empty()
       user.renderLogin(aView)
+      return false
     } else {
       aView.renderUser()
       aView.renderPageTitle(page)
     }
+    return true
   }
 
   this.renderUser = function () {
