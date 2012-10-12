@@ -76,6 +76,7 @@ var aView = new function () {
       // ### FIXME: check access if topicalarea is really part of this lecture
       // ### render general infos for topicalarea
       if (excerciseTextId != undefined) {
+        aView.setupMathJaxRenderer()
         // ### FIXME: check access if excercise text is really part of this topicalare in this lecture
         aView.currentExcerciseText = dmc.get_topic_by_id(excerciseTextId, true)
         if (excerciseId != undefined) {
@@ -163,6 +164,11 @@ var aView = new function () {
     }
   }
 
+  this.renderMathInContentArea = function () {
+    // typeset all elements containing TeX to SVG or HTML in default area #content
+    MathJax.Hub.Typeset()
+  }
+
   this.renderExcerciseText = function () {
     // Status der Aufgabenstellung nur rendern, wenn es schon eine &Uuml;bung dazu gibt.
     aView.renderExcerciseTextTitle()
@@ -209,17 +215,36 @@ var aView = new function () {
   this.renderApproachForm = function  () {
     var uploadPath = "/"
     // ### 
-    var submissionLabel = "<label for=\"excercise-input\">Bitte trage die L&ouml;sung bzw. den L&ouml;sungsweg hier ein</label><br/>"
+    var submissionLabel = "<label for=\"excercise-input\">Bitte trage die L&ouml;sung bzw. den L&ouml;sungsweg hier ein"
+      + "<br/></label>"
+      + "<br/>"
     var submission = "<form name=\"approach-submission\" action=\"javascript:aView.submitApproachToExcercise()\">"
+      + "<b class=\"label\">Vorschau</b><br/><div id=\"math-preview\" class=\"math\"></div><br/>"
       + "<textarea type=\"text\" name=\"excercise-input\" rows=\"4\" size=\"120\"></textarea><br/>"
-      + "<span class=\"label upload\">Alternativ kannst du auch ein Foto deiner handschriftlichen, aber leserlichen "
-      + " Berechnungen abgeben. Lade dazu Bitte die Datei <a class=\"button upload\""
-      + " href=\"#\" alt=\"Bild hochladen\ title=\"Bild hochladen\">hier hoch</a>.</span><br/><br/>"
-      + "<input type=\"submit\" value=\"Aufgabe einreichen\" class=\"button submit\"></input>"
+      + "<b class=\"label\">Hinweis: Zwischen zwei \"$\"-Zeichen kannst Du hier auch direkt mit <a alt=\"Hilfeseite: "
+      + "Alphabetical list of supported TeX Commands\" title=\"Hilfeseite: Alphabetical list of supported "
+      + "TeX Commands\" href=\"http://www.onemathematicalcat.org/MathJaxDocumentation/TeXSyntax.htm\">$\\rm{TeX}$</a>"
+      + "arbeiten.</b><br/><br/><span class=\"label upload\">Alternativ kannst du auch ein Foto deiner "
+      + "handschriftlichen, aber bitte leserlichen Berechnungen abgeben. Lade dazu Bitte die Datei "
+      + "<a class=\"button upload\" href=\"#\" alt=\"Bild hochladen\ title=\"Bild hochladen\">hier hoch</a>.</span>"
+      + "<br/><br/><input type=\"submit\" value=\"Aufgabe einreichen\" class=\"button submit\"></input>"
       + "</form>"
     $("#content").append(submissionLabel).append(submission)
     $(".button.upload").click(aView.open_upload_dialog(uploadPath, aView.handleUploadResponse))
-    // $(".button.submit").click(aView.submitApproachToExcercise)
+    
+    // mathjax preview handling
+    $input = $("[name=excercise-input]")
+    $input.keyup(function(e) {
+      aView.renderApproachMathPreview($input.val())
+      return function(){}
+    })
+
+    aView.renderMathInContentArea()
+  }
+
+  this.renderApproachMathPreview = function(value) {
+    $("#math-preview").text(value)
+    MathJax.Hub.Typeset()
   }
 
   this.renderExcerciseObject = function (eObject) {
@@ -521,6 +546,7 @@ var aView = new function () {
       aView.renderExcerciseObject(aView.currentExcerciseObject)
       // FIXME: clean up rendering of this view
       aView.renderApproachForm()
+      aView.renderMathInContentArea()
     }
   }
 
@@ -733,6 +759,28 @@ var aView = new function () {
         }
       }
     }
+  }
+
+  this.setupMathJaxRenderer = function() {
+    MathJax.Ajax.config.root = host + "/de.tu-berlin.eduzen.mathjax-renderer/script/vendor/mathjax"
+    MathJax.Hub.Config({
+        "extensions": ["tex2jax.js", "mml2jax.js", "MathEvents.js", "MathZoom.js", "MathMenu.js", "toMathML.js",
+           "TeX/noErrors.js","TeX/noUndefined.js","TeX/AMSmath.js","TeX/AMSsymbols.js", "FontWarnings.js"],
+        "jax": ["input/TeX", "output/SVG"], // "input/MathML", "output/HTML-CSS", "output/NativeMML"
+        "tex2jax": { "inlineMath": [["$","$"],["\\(","\\)"]] },
+        "menuSettings": {
+            "zoom": "Double-Click", "mpContext": true, "mpMouse": true, "zscale": "200%", "texHints": true
+        },
+        "errorSettings": {
+            "message": ["[Math Error]"]
+        },
+        "displayAlign": "left",
+        "SVG": { "blacker": 8, "scale": 110 },
+        "v1.0-compatible": false,
+        "skipStartupTypeset": false,
+        "elements": ["content"]
+    });
+    MathJax.Hub.Configured() // bootstrap mathjax.js lib now
   }
 
 }

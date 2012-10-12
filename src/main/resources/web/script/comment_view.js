@@ -63,6 +63,7 @@ var cView = new function () {
   this.initCommentingView = function (param, excerciseId) {
     cView.renderHeader() // login check
     if (param === "excercise") {
+      cView.setupMathJaxRenderer()
       console.log("load approach-view for excercise => " + excerciseId)
       $("#menu").hide()
       cView.currentExcercise = dmc.get_topic_by_id(excerciseId, true)
@@ -71,6 +72,7 @@ var cView = new function () {
       if (cView.isSampleApproachAvailable(cView.currentExcerciseText.id)) { 
         cView.renderSampleSolutionForExcerciseText()
       }
+      cView.renderMathInContentArea()
     } else if (param === "new") {
       console.log("load commenting-view with all excercises having just one uncommented approach..")
       $("#menu").show()
@@ -140,6 +142,11 @@ var cView = new function () {
       + "<a class=\"inprogress\" href=\""+ host +"/eduzen/view/commenting/inprogress\">wartend auf Kommentar</a>"
       + "<a class=\"unapproached\" href=\""+ host +"/eduzen/view/commenting/unapproached\">ohne L&ouml;sungsversuch</a>"
       + "<a class=\"all\" href=\""+ host +"/eduzen/view/commenting/all\">Alle &Uuml;bungen</a>")
+  }
+
+  this.renderMathInContentArea = function () {
+    // typeset all elements containing TeX to SVG or HTML in default area #content
+    MathJax.Hub.Typeset()
   }
 
   /** Rendering all current submissions of any user **/
@@ -519,20 +526,26 @@ var cView = new function () {
     return dmc.request("POST", "/accesscontrol/logout", undefined, undefined)
   }
 
-
-
-
-  /** HTML5 History API utility methods **/
-
-  this.popHistory = function (state) {
-    if (!cView.historyApiSupported) return
-    // do handle pop events
-  }
-
-  this.pushHistory = function (state, link) {
-    if (!cView.historyApiSupported) return
-    var history_entry = {state: state, url: link}
-    window.history.pushState(history_entry.state, null, history_entry.url)
+  this.setupMathJaxRenderer = function() {
+    MathJax.Ajax.config.root = host + "/de.tu-berlin.eduzen.mathjax-renderer/script/vendor/mathjax"
+    MathJax.Hub.Config({
+        "extensions": ["tex2jax.js", "mml2jax.js", "MathEvents.js", "MathZoom.js", "MathMenu.js", "toMathML.js",
+           "TeX/noErrors.js","TeX/noUndefined.js","TeX/AMSmath.js","TeX/AMSsymbols.js", "FontWarnings.js"],
+        "jax": ["input/TeX", "output/SVG"], // "input/MathML", "output/HTML-CSS", "output/NativeMML"
+        "tex2jax": { "inlineMath": [["$","$"],["\\(","\\)"]] },
+        "menuSettings": {
+            "zoom": "Double-Click", "mpContext": true, "mpMouse": true, "zscale": "200%", "texHints": true
+        },
+        "errorSettings": {
+            "message": ["[Math Error]"]
+        },
+        "displayAlign": "left",
+        "SVG": { "blacker": 8, "scale": 110 },
+        "v1.0-compatible": false,
+        "skipStartupTypeset": false,
+        "elements": ["content"]
+    });
+    MathJax.Hub.Configured() // bootstrap mathjax.js lib now
   }
 
 }
