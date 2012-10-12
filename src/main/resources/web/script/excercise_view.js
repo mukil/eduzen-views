@@ -83,13 +83,13 @@ var eView = new function () {
   }
 
   this.renderUser = function () {
-    $(".title").html("Hi <a href=\"/eduzen/view/user/" + user.user.id + "\" class=\"btn username\"> "
-      + user.user.value + "</a>.&nbsp;")
+    $(".title").html("<p class=\"buffer\">Hi <a href=\"/eduzen/view/user/" + user.user.id + "\" class=\"btn username\"> "
+      + user.user.value + "</a>.&nbsp;</p>")
   }
 
   this.renderLecture = function () {
     var courseName = eView.getNameOfCourse(eView.currentLecture.id).items[0].value
-    $(".title").append("Hier findest du &Uuml;bungen zu deiner" 
+    $(".title p.buffer").append("Hier findest du &Uuml;bungen zu deiner" 
       + " Lehrveranstaltung <a href=\"/eduzen/view/lecture/" + eView.currentLecture.id
       + "\" class=\"lecturename\">"+ courseName +" / "+ eView.currentLecture.value +"</a>")
   }

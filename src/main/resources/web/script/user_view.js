@@ -17,7 +17,7 @@ var uView = new function () {
 
   this.initView = function () {
     if (user.getCurrentUser() === undefined) {
-      uView.renderLogin()
+      user.renderLogin(uView)
     } else {
       uView.renderUsername()
       user.loadUserAccount()
@@ -43,14 +43,14 @@ var uView = new function () {
   }
 
   this.renderUsername = function () {
-    var html = "<a class=\"btn back\" href=\"javascript:history.back()\">Zur&uuml;ck</a><br/><br/>"
-        + "Kontoeinstellungen von <span class=\"label\">" + user.user.value + "</span></a>"
+    var html = "<br/><p class=\"buffer\"><a class=\"btn back\" href=\"javascript:history.back()\">Zur&uuml;ck</a><br/>"
+        + "<br/>Kontoeinstellungen von <span class=\"label\">" + user.user.value + "</span></a>"
         + "<br/><br/><span class=\"logout button\">Logout</span><p><br/></p>"
-        + "<form id=\"user-form\" name=\"search\" action=\"javascript:void(0)\">"
+        + "<form id=\"user-form\" name=\"search\" action=\"javascript:void(0)\"><p class=\"buffer\">"
         + "  <label for=\"pwdfield\">Your encrypted password</label><span class=\"edit button\">Edit</span>"
         + "  <input name=\"pwdfield\" class=\"pwdfield\" type=\"password\" disabled=\"disabled\""
         + "    placeholder=\"Password\"></input><br/><br/>"
-        + "  <span class=\"pwdsave button\">Save</span>"
+        + "  <span class=\"pwdsave button\">Save</span></p>"
         + "</form>"
     $(".title").html(html)
     $(".edit.button").click(uView.pwdHandler)
@@ -59,34 +59,15 @@ var uView = new function () {
     $(".pwdsave.button").hide()
   }
 
-  this.renderLogin = function () {
-    var html = "Authentifizierung ben&ouml;tigt</a><br/><br/>"
-      html += "<form id=\"user-form\" name=\"search\" action=\"javascript:uView.loginHandler()\">"
-        + "  <label for=\"namefield\">Your username</label>"
-        + "  <input name=\"namefield\" class=\"pwdfield\" type=\"text\" placeholder=\"Username\"></input><br/>"
-        + "  <label for=\"pwdfield\">Your password</label>"
-        + "  <input name=\"pwdfield\" class=\"pwdfield\" type=\"password\" placeholder=\"Password\"></input><br/><br/>"
-        + "  <span class=\"login btn\" title=\"do login\">Login</span>"
-        + "</form>"
-    $(".title").html(html)
-    $(".login.btn").click(uView.loginHandler)
-    $("[name=pwdfield]").keypress(function (e) {
-        if (e.keyCode == 13) {
-            uView.loginHandler()
-            return function(){}
-        }
-    })
-  }
-
   this.renderUserAccount = function() {
     var password = user.account.composite['dm4.accesscontrol.password'].value
     $(".pwdfield").val(password)
     $(".pwdsave.button").click(uView.submitPassword)
-    var html = "<br/><br/>"
+    var html = "<p class=\"buffer\">"
         + "  <label for=\"mailfield\">Your current mailbox</label><span class=\"mailedit button\">Edit</span>"
         + "  <input name=\"mailfield\" class=\"mailfield\" type=\"text\" disabled=\"disabled\""
         + "    placeholder=\"E-Mail\"></input><br/>"
-        + "  <span class=\"emailsave button\">Save</span>"
+        + "  <span class=\"emailsave button\">Save</span></p>"
     $("#user-form").append(html)
     $(".emailsave.button").hide()
     // ### display console.log(user.account)
@@ -115,18 +96,6 @@ var uView = new function () {
     $(controlField).insertBefore(".pwdsave.button")
   }
 
-  this.loginHandler = function(e) {
-    var username = $("[name=namefield]").val()
-    var password = $("[name=pwdfield]").val()
-    user.login(authorization())
-    uView.initView()
-      
-      /** Returns value for the "Authorization" header. */
-      function authorization() {
-        return "Basic " + btoa(username + ":" + password)   // ### FIXME: btoa() might not work in IE
-      }
-  }
-
   this.submitPassword = function (e) {
     var next = $(".pwdfield").val()
     var and = $(".2nd.pwdfield").val()
@@ -141,21 +110,6 @@ var uView = new function () {
     }
     // update gui
     uView.initView()
-  }
-
-  /** HTML History API methods **/
-
-  this.popHistory = function (state) {
-    if (!uView.historyApiSupported) return
-    if (state.action == "doshow") {
-      var param = state.parameter
-    }
-  }
-
-  this.pushHistory = function (state, link) {
-    if (!uView.historyApiSupported) return
-    var history_entry = {state: state, url: link}
-    window.history.pushState(history_entry.state, null, history_entry.url)
   }
 
 }

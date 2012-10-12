@@ -133,16 +133,16 @@ var aView = new function () {
   }
 
   this.renderUser = function () {
-    $(".title").html("Hi <a href=\"/eduzen/view/user/" + user.user.id + "\" class=\"btn username\"> "
-      + user.user.value + "</a>.&nbsp;")
+    $(".title").html("<p class=\"buffer\">Hi <a href=\"/eduzen/view/user/" + user.user.id + "\" class=\"btn username\"> "
+      + user.user.value + "</a>.&nbsp;</p>")
   }
 
   this.renderPageTitle = function (page) {
     if (page === "excercise-text") {
       var excerciseTextName = aView.currentExcerciseText.value
       var tpName = aView.currentTopicalarea.value
-      $(".title").append("Du kannst so viele &Uuml;bungen einreichen wie du m&ouml;chtest, sobald eine im "
-        + "1. Versuch korrekt ist, ist die Aufgabenstellung gel&ouml;st.<br/>"
+      $(".title p.buffer").append("Du kannst so viele &Uuml;bungen einreichen wie du m&ouml;chtest, sobald eine im "
+        + "1. Versuch korrekt ist, ist die Aufgabenstellung gel&ouml;st.&nbsp;"
         + "<b class=\"label\">Du schaust gerade auf die Aufgabenstellung <span class=\"excercise-text selected\">"
         + excerciseTextName +"</span> im Themenkomplex</b> "
         + "<a href=\"/eduzen/view/lecture/" + aView.currentLectureId + "/topicalarea/"
@@ -150,7 +150,7 @@ var aView = new function () {
         + tpName + "\" alt=\"" + tpName + "\">" + tpName + "</a><br/>")
     } else if (page === "excercise") {
       var excerciseState = aView.getExerciseState(aView.currentExcercise.id)
-      $(".title").append("<b class=\"label\">Der aktuelle Themenkomplex ist"
+      $(".title p.buffer").append("<b>Der aktuelle Themenkomplex ist"
         + "<a class=\"topicalareaname\" href=\""+ aView.getTopicalareaUrl() +"\">"+ aView.currentTopicalarea.value +"</a><br/>"
         + "Die Aufgabenstellung <a class=\"btn e-text\" href=\""+ aView.getExcerciseTextUrl() +"\">"+ aView.currentExcerciseText.value +"</a>"
         + " ist <span class=\"darkstate\">\"" + dict.stateName(excerciseState.quest_state) + "\"</span>"
@@ -173,8 +173,7 @@ var aView = new function () {
         // excercise was taken-on, but an approach was not submitted yet
         aView.currentExcercise = excercise
         aView.renderExcerciseObject(excercise.composite["tub.eduzen.excercise_object"])
-        $("#content").append("Du hast die Aufgabe angenommen aber noch keinen L&ouml;sungsvorschlag dazu eingereicht. "
-          + "Das k&ouml;nntest du jetzt tun.")
+        $("#content").append("Du hast die Aufgabe angenommen aber noch keinen L&ouml;sungsvorschlag dazu eingereicht.")
           .append("<br/><br/><span class=\"button new-approach\">Jetzt versuchen</span><br/><br/><br/>")
         $(".button.takeon").remove()
         $("#sample-solution").remove()
@@ -221,7 +220,7 @@ var aView = new function () {
 
   this.renderExcerciseObject = function (eObject) {
 
-    $("#content").append("<b class=\"label\">Und hier ist die zu berechnende Aufgabe</b><br/><br/>")
+    $("#content").append("<br/><br/><b class=\"label\">Und hier ist die zu berechnende Aufgabe</b><br/><br/>")
     $("#content").append("<p class=\"excercise-object\">" + eObject.value + "</p><br/<br/>")
   }
 
@@ -285,10 +284,12 @@ var aView = new function () {
             + "<b class=\"label\">Aufgabenstellung</b>&nbsp;<b>"+ dict.stateName(e_text_state) +"</b>")
         $("#content").append("<ul id=\"taken-excercises\">")
         approach = approach[0] // render just the first approach, here in this excercises overview
-        var name = approach.composite["tub.eduzen.timeframe_note"].value
+        var timestamp = approach.composite["tub.eduzen.timeframe_note"].value
+        var time = new Date(parseInt(timestamp))
+        var dateString = time.toLocaleDateString() + ", um " + time.getHours() + ":" + time.getMinutes() + " Uhr"
         var state = aView.getExerciseState(excercise.id).excercise_state
         var listItem = "<li class=\"taken-excercise\">" 
-            + "<span class=\"name\" id=\""+ excercise.id +"\"><a id=\"a-"+ excercise.id +"\" href=\"#\">"+ name +"</a></span><br/>"
+            + "<span class=\"name\" id=\""+ excercise.id +"\"><a id=\"a-"+ excercise.id +"\" href=\"#\">"+ dateString +"</a></span><br/>"
             + "<span class=\"count\">"+ excercise.composite["tub.eduzen.approach"].length +"&nbsp;Versuch/e</span>"
             + "<span class=\"state\">Status der &Uuml;bung: "+ dict.stateName(state) +"</span>"
           + "</li>"
@@ -337,11 +338,12 @@ var aView = new function () {
     for (item in approaches ) {
       var approach = approaches[item]
       var timestamp = approach.composite["tub.eduzen.timeframe_note"].value
+      var time = new Date(parseInt(timestamp))
+      var dateString = time.toLocaleDateString() + ", um " + time.getHours() + ":" + time.getMinutes() + " Uhr"
       // var state = approach.composite["tub.eduzen.approach_correctness"].value
       var state = aView.getApproachState(approach.id).status
       var content = approach.composite["tub.eduzen.approach_content"].value
       var comments = aView.getCommentsForApproach(approach.id)
-      var approachLink = excercise.id +"/approach/"+ approach.id
       // Page Item
       var commentsLink = "<a href=\"#\" class=\"btn "+ approach.id +" comment\" alt=\"Neues Kommentar verfassen\""
         + "title=\"Neues Kommentar verfassen\">Neues Kommentar verfassen</a>"
@@ -349,34 +351,33 @@ var aView = new function () {
         commentsLink = "<a href=\"#\" class=\"btn "+ approach.id +" comment\" alt=\"Alle Kommentare anzeigen\""
         + "title=\"Alle Kommentare anzeigen\">Alle Kommentare anzeigen</a>"
       }
-      var listItem = "<li class=\"approach\">"
-          + "<span class=\"submitted\">"+ numberOfApproach +". Versuch, eingereicht um <a id=\""+ approach.id +"\" href=\""
-            + approachLink +"\">"+ timestamp +"</a></span>"
+      var listItem = "<li class=\"approach\"><div class=\"approach-"+ numberOfApproach +"\">"
+          + "<span class=\"submitted\">"+ numberOfApproach +". Versuch, eingereicht um "+ dateString +"</span>"
           + "<b class=\"label\">ist <span class=\"darkstate\">\""+ dict.stateName(state) +"\"</span><br/>"
           + "<div class=\"content\">"+ content +"</div>"
-          + "<span class=\"comments\">"+ commentsLink +"</span>"
+          + "<span class=\"comments\">"+ commentsLink +"</span></div>"
         + "</li>"
       $(".approach-list").append(listItem)
-      $(".btn."+ approach.id +".comment").click(create_comment_handler(approach))
+      $(".btn."+ approach.id +".comment").click(create_comment_handler(approach, numberOfApproach))
       if (aView.getFileContent(approach.id)) console.log("debug: render approach list_entry with file symbol..") // ###
       numberOfApproach++
     }
 
     $(".button.new-approach").click(aView.renderApproachForm)
 
-    function create_comment_handler (approach) {
+    function create_comment_handler (approach, numberOfApproach) {
       return function(e) {
-        aView.renderCommentsForApproach(approach)
-        aView.renderCommentFormForApproach(approach)
+        aView.renderCommentsForApproach(approach, numberOfApproach)
+        aView.renderCommentFormForApproach(approach, numberOfApproach)
       }
     }
   }
 
-  this.renderCommentsForApproach = function(approach) {
-    $("#content").append("<ul id=\"comment-list\">")
+  this.renderCommentsForApproach = function(approach, numberOfApproach) {
+    console.log("   rendering all comments for approach .. ")
+    $(".approach-"+ numberOfApproach).append("<ul id=\"comment-list\">")
     $("#comment-list").empty()
     var comments = aView.getCommentsForApproach(approach.id)
-    console.log("   rendering all "+ comments.total_count +" comments for approach .. ")
     if (comments.total_count > 0) {
       aView.existingComments = comments
       for (c in comments.items) {
@@ -392,7 +393,7 @@ var aView = new function () {
     }
   }
 
-  this.renderCommentFormForApproach = function(approach) {
+  this.renderCommentFormForApproach = function(approach, numberOfApproach) {
     $("#new-comment").remove()
     var form = "<div id=\"new-comment\"><b class=\"label\">Inhalt deines Kommentars</b>"
       + "<form name=\"comment\" id=\"new-comment-form\" action=\"javascript:void(0);\">"
@@ -401,7 +402,7 @@ var aView = new function () {
       + "<input class=\"is-correct\" name=\"is-correct\" type=\"checkbox\"></input></label>"
       + "<input class=\"btn comment\" type=\"submit\" value=\"Kommentieren\"></input>"
       + "</form></div>"
-    $("#content").append(form)
+    $(".approach-"+ numberOfApproach).append(form)
     $("#new-comment-form").submit(do_comment_handler(approach))
 
     function do_comment_handler(approach) {
@@ -544,11 +545,6 @@ var aView = new function () {
   /** Server Communications - Strictly persisting server and updating client side model **/
   /** Methods to access eduzen, deepamehta-core and accesscontrol REST-Services **/
 
-  /** Make this work for a single excercise, state will of ET will be provided by an explicit server-method */
-  this.getStateOfApproach = function (approachId) {
-    // get sate of excercise/approach
-  }
-
   this.loadExcercisesForExcerciseText = function(eTextId) {
     var usersExcercisesForExcerciseText = new Array()
     // FIXME: assemble this on the server-side, get excercises just by this author
@@ -624,8 +620,6 @@ var aView = new function () {
               } 
             }
           }
-        } else {
-          console.log("WARNING: no approaches submitted for eText " + eTextId)
         }
       }
     }

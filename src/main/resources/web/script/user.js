@@ -52,14 +52,14 @@ function user() {
 
     this.renderLogin = function (view) {
         self.view = view
-        var html = "Authentifizierung ben&ouml;tigt</a><br/><br/>"
-          html += "<form id=\"user-form\" name=\"search\" action=\"javascript:self.loginHandler()\">"
+        var html = "<br/><p class=\"buffer\">Authentifizierung ben&ouml;tigt</a><br/></p>"
+          html += "<form id=\"user-form\" name=\"search\" action=\"javascript:self.loginHandler()\"><p class=\"buffer\">"
             + "  <label for=\"namefield\">Your username</label>"
             + "  <input name=\"namefield\" class=\"pwdfield\" type=\"text\" placeholder=\"Username\"></input><br/>"
             + "  <label for=\"pwdfield\">Your password</label>"
             + "  <input name=\"pwdfield\" class=\"pwdfield\" type=\"password\" placeholder=\"Password\"></input><br/><br/>"
-            + "  <span class=\"login btn\" title=\"do login\">Login</span><br/><br/>"
-            + "</form>"
+            + "  <span class=\"login btn\" title=\"do login\">Login</span><br/><br/></p>"
+            + "<p id=\"message\" class=\"buffer failed\"></p></form>"
         $(".title").html(html)
         $(".login.btn").click(self.loginHandler)
         $("[name=pwdfield]").keypress(function (e) {
@@ -73,13 +73,25 @@ function user() {
     this.loginHandler = function(e) {
         var username = $("[name=namefield]").val()
         var password = $("[name=pwdfield]").val()
-        self.login(authorization())
-        self.view.initViews()
-      
+        try {
+            self.login(authorization())  // throws 401 if login fails
+            show_message("Login OK", "ok")
+            self.view.initViews()
+        } catch (e) {
+            show_message("Login failed", "failed")
+            console.log("Access denied.")
+        }
+
         /** Returns value for the "Authorization" header. */
         function authorization() {
             return "Basic " + btoa(username + ":" + password)   // ### FIXME: btoa() might not work in IE
         }
-    }
 
+        function show_message(message, css_class, callback) {
+            $("#message").fadeOut(200, function() {
+                $(this).text(message).addClass(css_class).fadeIn(1000, callback)
+            })
+        }
+
+    }
 }
