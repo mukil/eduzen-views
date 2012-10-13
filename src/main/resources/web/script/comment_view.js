@@ -255,11 +255,11 @@ var cView = new function () {
       var content = approach.composite["tub.eduzen.approach_content"].value
       var comments = cView.getCommentsForApproach(approach.id)
       // Page Item
-      var commentsLink = "<a href=\"#\" class=\"btn "+ approach.id +" comment\" alt=\"Neues Kommentar verfassen\""
-        + "title=\"Neues Kommentar verfassen\">Neues Kommentar verfassen</a>"
+      var commentsLink = "<a href=\"#\" class=\"btn "+ approach.id +" comment\" alt=\"Feedback geben\""
+        + "title=\"Feedback geben\">Feedback geben</a>"
       if (comments.total_count > 0) {
-        commentsLink = "<a href=\"#\" class=\"btn "+ approach.id +" comment\" alt=\"Alle Kommentare anzeigen\""
-        + "title=\"Alle Kommentare anzeigen\">Alle Kommentare anzeigen</a>"
+        commentsLink = "<a href=\"#\" class=\"btn "+ approach.id +" comment\" alt=\"Feedback anzeigen\""
+        + "title=\"Feedback anzeigen\">Feedback anzeigen</a>"
       }
       var time = new Date(parseInt(timestamp))
       var dateString = time.toLocaleDateString() + ", um " + time.getHours() + ":" + time.getMinutes() + " Uhr"
@@ -271,7 +271,10 @@ var cView = new function () {
         + "</li>"
       $(".approach-list").append(listItem)
       $(".btn."+ approach.id +".comment").click(create_comment_handler(approach, numberOfApproach))
-      if (cView.getFileContent(approach.id)) console.log("debug: render approach list_entry with file symbol..") // ###
+      var attachment = cView.getFileContent(approach.id)
+      if (attachment != undefined) {
+        cView.renderFileAttachment(approach.id, attachment[0], numberOfApproach)
+      }
       numberOfApproach++
     }
 
@@ -322,6 +325,15 @@ var cView = new function () {
         cView.doCommentApproach(approach, value, correctness)
       }
     }
+  }
+  
+  this.renderFileAttachment = function(approachId, attachment, numberOfApproach) {
+    // var icon = host + "/de.deepamehta.files/images/sheet.png"
+    var img = host + "/filerepo/uebungen/" + attachment.value
+    // var iconSrc = "<img src=\""+ icon +"\" alt=\"Document: "+ attachment.value +"\" title=\"Document: "+ attachment.value +"\" class=\"file-icon\">"
+    var fileSrc = "<img src=\""+ img +"\" alt=\"Document: "+ attachment.value +"\" title=\"Document: "+ attachment.value +"\" class=\"file-icon\">"
+    // $(".approach-"+ numberOfApproach).append(iconSrc)
+    $(".approach-"+ numberOfApproach + " .content").append(fileSrc)
   }
 
   this.showExcerciseInfo = function (eId, uId) {

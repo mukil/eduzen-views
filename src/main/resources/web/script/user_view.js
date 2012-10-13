@@ -21,7 +21,8 @@ var uView = new function () {
     } else {
       uView.renderUsername()
       user.loadUserAccount()
-      uView.renderUserAccount()
+      // uView.renderUserAccount()
+      uView.renderHelpLink()
     }
     // registering handler
     /** $("[name=search]").submit(uView.doSearch)
@@ -35,7 +36,6 @@ var uView = new function () {
 
     if (commands[0] === "userId") {
       var value = commands[1].substr(commands[1].indexOf("=") + 1)
-      console.log("render User " + value)
     } /** else if (commands[0] === "doshow") {
       var exId = parseInt(commands[1].substr(commands[1].indexOf("=") + 1))
       uView.showResultDetails(undefined, exId)
@@ -71,6 +71,13 @@ var uView = new function () {
     $("#user-form").append(html)
     $(".emailsave.button").hide()
     // ### display console.log(user.account)
+  }
+
+  this.renderHelpLink = function() {
+    var mailto = "<p class=\"buffer\">Ihr braucht Hilfe bei einer &Uuml;bung, habt Anregungen oder Fragen zu dieser "
+      + " Web-Anwendung, schickt uns einfach eine Mail an <a class=\"btn mail\" title=\"Mail an EducationZEN Hilfe\" "
+      + "alt=\"Mail an Team\" href=\"mailto:team@eduzen.tu-berlin.de\">team@eduzen.tu-berlin.de</a> - Danke!<br/></p>"
+    $("#header").append(mailto)
   }
 
   this.pwdHandler = function (e) {

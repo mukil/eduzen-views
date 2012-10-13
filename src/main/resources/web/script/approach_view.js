@@ -298,19 +298,21 @@ var aView = new function () {
 
   /** Rendering all tries for any given excercise-text and our current user **/
   this.renderExcerciseHistoryForUser = function () {
+    var e_text_state = aView.getExcerciseTextState(aView.currentExcerciseText.id).status
+    // Content Header
+    $("#content").append("<br/><b class=\"label history\">Historie</b> Du hast bisher "+ aView.allExcercises.length 
+      + " &Uuml;bung/en zu dieser Aufgabenstellung bearbeitet.&nbsp;&nbsp;&nbsp;"
+      + "<b class=\"label\">Aufgabenstellung</b>&nbsp;<b>"+ dict.stateName(e_text_state) +"</b>")
+    // Content Items
     for (item in aView.allExcercises) {
       var excercise = dmc.get_topic_by_id(aView.allExcercises[item].id)
-      // use the first approach representing a taken-excercise
+      // use the first approach to represent a taken-excercise
       var approach = excercise.composite["tub.eduzen.approach"]
-      var e_text_state = aView.getExcerciseTextState(aView.currentExcerciseText.id).status
       if (approach == undefined) {
         // ### 
         // excercise was taken-on but no approach was submitted yet
         return excercise
       } else {
-        $("#content").append("<br/><b class=\"label history\">Historie</b> Du hast bisher "+ aView.allExcercises.length 
-            + " &Uuml;bung/en zu dieser Aufgabenstellung bearbeitet.").append("&nbsp;&nbsp;&nbsp;"
-            + "<b class=\"label\">Aufgabenstellung</b>&nbsp;<b>"+ dict.stateName(e_text_state) +"</b>")
         $("#content").append("<ul id=\"taken-excercises\">")
         approach = approach[0] // render just the first approach, here in this excercises overview
         var timestamp = approach.composite["tub.eduzen.timeframe_note"].value
@@ -318,18 +320,18 @@ var aView = new function () {
         var dateString = time.toLocaleDateString() + ", um " + time.getHours() + ":" + time.getMinutes() + " Uhr"
         var state = aView.getExerciseState(excercise.id).excercise_state
         var listItem = "<li class=\"taken-excercise\">" 
-            + "<span class=\"name\" id=\""+ excercise.id +"\"><a id=\"a-"+ excercise.id +"\" href=\"#\">"+ dateString +"</a></span><br/>"
-            + "<span class=\"count\">"+ excercise.composite["tub.eduzen.approach"].length +"&nbsp;Versuch/e</span>"
-            + "<span class=\"state\">Status der &Uuml;bung: "+ dict.stateName(state) +"</span>"
+            + "<span class=\"name\" id=\""+ excercise.id +"\"><a id=\"a-"+ excercise.id +"\" href=\"#\">"+ dateString 
+            +"</a></span><br/><span class=\"count\">"+ excercise.composite["tub.eduzen.approach"].length
+            +"&nbsp;Versuch/e</span><span class=\"state\">Status der &Uuml;bung: "+ dict.stateName(state) +"</span>"
           + "</li>"
         $("#taken-excercises").append(listItem)
-        $("#"+ excercise.id).click(create_approach_handler(excercise))
-        $("#a-"+ excercise.id).click(create_approach_handler(excercise))
-        if (aView.getFileContent(approach.id)) console.log("debug: render approach list_entry with file symbol..") // ###
+
+        $("#"+ excercise.id).click(create_exercise_handler(excercise))
+        $("#a-"+ excercise.id).click(create_exercise_handler(excercise))
       }
     }
     
-    function create_approach_handler (excercise) {
+    function create_exercise_handler (excercise) {
       return function (e) {
         // aView.currentExcercise = excercise
         // aView.renderExcerciseApproachInfo()
@@ -374,21 +376,25 @@ var aView = new function () {
       var content = approach.composite["tub.eduzen.approach_content"].value
       var comments = aView.getCommentsForApproach(approach.id)
       // Page Item
-      var commentsLink = "<a href=\"#\" class=\"btn "+ approach.id +" comment\" alt=\"Neues Kommentar verfassen\""
-        + "title=\"Neues Kommentar verfassen\">Neues Kommentar verfassen</a>"
+      // var commentsLink = "<a href=\"#\" class=\"btn "+ approach.id +" comment\" alt=\"Neues Kommentar verfassen\""
+        // + "title=\"Neues Kommentar verfassen\">Neues Kommentar verfassen</a>"
+      var commentsLink = "<br/>Wartend auf Feedback."
       if (comments.total_count > 0) {
         commentsLink = "<a href=\"#\" class=\"btn "+ approach.id +" comment\" alt=\"Alle Kommentare anzeigen\""
-        + "title=\"Alle Kommentare anzeigen\">Alle Kommentare anzeigen</a>"
+        + "title=\"Alle Kommentare anzeigen\">Feedback anzeigen</a>"
       }
       var listItem = "<li class=\"approach\"><div class=\"approach-"+ numberOfApproach +"\">"
           + "<span class=\"submitted\">"+ numberOfApproach +". Versuch, eingereicht um "+ dateString +"</span>"
-          + "<b class=\"label\">ist <span class=\"darkstate\">\""+ dict.stateName(state) +"\"</span><br/>"
+          + "<b class=\"label\">&nbsp;ist <span class=\"darkstate\">\""+ dict.stateName(state) +"\"</span><br/>"
           + "<div class=\"content\">"+ content +"</div>"
           + "<span class=\"comments\">"+ commentsLink +"</span></div>"
         + "</li>"
       $(".approach-list").append(listItem)
       $(".btn."+ approach.id +".comment").click(create_comment_handler(approach, numberOfApproach))
-      if (aView.getFileContent(approach.id)) console.log("debug: render approach list_entry with file symbol..") // ###
+      var attachment = aView.getFileContent(approach.id)
+      if (attachment != undefined) {
+        aView.renderFileAttachment(approach.id, attachment[0], numberOfApproach)
+      }
       numberOfApproach++
     }
 
@@ -397,7 +403,7 @@ var aView = new function () {
     function create_comment_handler (approach, numberOfApproach) {
       return function(e) {
         aView.renderCommentsForApproach(approach, numberOfApproach)
-        aView.renderCommentFormForApproach(approach, numberOfApproach)
+        // aView.renderCommentFormForApproach(approach, numberOfApproach)
       }
     }
   }
@@ -441,6 +447,15 @@ var aView = new function () {
         aView.doCommentApproach(approach, value, correctness)
       }
     }
+  }
+
+  this.renderFileAttachment = function(approachId, attachment, numberOfApproach) {
+    // var icon = host + "/de.deepamehta.files/images/sheet.png"
+    var img = host + "/filerepo/uebungen/" + attachment.value
+    // var iconSrc = "<img src=\""+ icon +"\" alt=\"Document: "+ attachment.value +"\" title=\"Document: "+ attachment.value +"\" class=\"file-icon\">"
+    var fileSrc = "<img src=\""+ img +"\" alt=\"Document: "+ attachment.value +"\" title=\"Document: "+ attachment.value +"\" class=\"file-icon\">"
+    // $(".approach-"+ numberOfApproach).append(iconSrc)
+    $(".approach-"+ numberOfApproach + " .content").append(fileSrc)
   }
 
   /** 
@@ -533,21 +548,24 @@ var aView = new function () {
     // render excercise-text header
     $("#content").empty()
     aView.renderExcerciseTextTitle()
+    // find an exercise-object for user and this exercise-text
     var eObject = aView.getExcerciseObjects(aView.currentExcerciseText.id)
     if (eObject.total_count == 0) {
       // FIXME: either there is really no object related to the excercise-text (already self-contained)
-      // or there is none fresh left for this user.
+      // or there is none fresh left for this user. workaround: hand out some already known excercise-object anyways
+      var compatibles = aView.getCompatibleExerciseObjects(aView.currentExcerciseText.id)
+      aView.currentExcerciseObject = compatibles[0]
     } else if (eObject.total_count >= 1) {
       var object = eObject.items[0]
       // update client side model
       aView.currentExcerciseObject = object
-      // 1) take on: create excercise and relate it to current user
-      aView.createExcerciseForUser()
-      aView.renderExcerciseObject(aView.currentExcerciseObject)
-      // FIXME: clean up rendering of this view
-      aView.renderApproachForm()
-      aView.renderMathInContentArea()
     }
+    // 1) take on: create excercise and relate it to current user
+    aView.createExcerciseForUser()
+    aView.renderExcerciseObject(aView.currentExcerciseObject)
+    // FIXME: clean up rendering of this view
+    aView.renderApproachForm()
+    aView.renderMathInContentArea()
   }
 
   this.handleUploadResponse = function (response) {
@@ -583,7 +601,6 @@ var aView = new function () {
       return false
     } else {
       var excercisesByUser = aView.getAllExcercisesByUser()
-      console.log("debug: user has taken excercise-text "+ eTextId +", searching for "+ excercisesByUser)
       if (excercisesByUser != undefined) {
         for (element in excercisesByUser) {
           var excercise = excercisesByUser[element]
@@ -696,6 +713,12 @@ var aView = new function () {
     return (files.total_count > 0) ? files.items : undefined
   }
 
+  this.getCompatibleExerciseObjects = function (excerciseTextId) {
+    var objects = dmc.get_topic_related_topics(excerciseTextId, {"others_topic_type_uri": "tub.eduzen.excercise_object", 
+      "assoc_type_uri": "tub.eduzen.compatible"})
+    return (objects.total_count > 0) ? objects.items : undefined
+  }
+
   this.getExcerciseObjects = function (excerciseTextId) {
     return dmc.request("GET", "/eduzen/exercise-object/"+ excerciseTextId, undefined, undefined, undefined, false)
   }
@@ -742,7 +765,7 @@ var aView = new function () {
 
     // 3) create dialog handler
     return function() {
-      upload_form.attr("action", "/files/" + new_path) // new path is currently static file-repo root
+      upload_form.attr("action", "/files/uebungen-uploads-wise12/" + new_path)
       upload_dialog.open()
       // bind handler
       upload_target.unbind("load")    // Note: the previous handler must be removed
