@@ -40,7 +40,6 @@ var eView = new function () {
     } else if (entity === "start") {
       // ### todo: laod available lectures via "tub.eduzen.identity", implement this in uView
       eView.initLectureView(eView.defaultLecture)
-      // push new application state.. /lecture/id
     }
   }
 
@@ -63,8 +62,8 @@ var eView = new function () {
           // ### eView.loadExcerciseTextsForTopicalarea()
           // ### eView.renderExcerciseText()
         } else { // render all topicalareas
-          console.log("load lecture-view for => " + lectureId)
-          eView.currentTopicalareas = eView.loadTopicalAreasByLV(eView.currentLecture.id).items
+          console.log("load topical areas into lecture-view of lecture => " + lectureId)
+          eView.currentTopicalareas = eView.loadTopicalAreasByLV(lectureId)
           if (eView.currentTopicalareas != undefined) {
             eView.renderTopicalareas()
           }
@@ -96,16 +95,17 @@ var eView = new function () {
   }
 
   this.renderTopicalareas = function () {
-    $("<p class=\"buffer\"><b class=\"label\">Dies ist deine pers&ouml;nliche &Uuml;bersicht &uuml;ber alle "
-      + "Themenkomplexe die in dieser Pr&uuml;fung abgefragt werden k&ouml;nnen:</b></p>")
-      .insertBefore("#result-list")
+    $("#header").append("<p class=\"buffer\"><b class=\"label\">Dies ist deine pers&ouml;nliche &Uuml;bersicht "
+      + "&uuml;ber alle Themenkomplexe die in dieser Pr&uuml;fung abgefragt werden k&ouml;nnen</b></p>")
+    if ($("#result-list").length == 0) $("#content").append("<ol id=\"result-list\"></ol>")
     for (i = 0; i < eView.currentTopicalareas.length; i++) {
       var topicalarea = eView.currentTopicalareas[i]
       var lectureId = eView.currentLecture.id
       if (topicalarea != undefined) {
-        $("#result-list").append("<li><a href=\"/eduzen/view/lecture/" + lectureId + "/topicalarea/"
+        var listItem = "<li><a href=\"/eduzen/view/lecture/" + lectureId + "/topicalarea/"
           + topicalarea.id + "\" class=\"topicalareaname\" alt=\"" + topicalarea.value + "\" title=\"Themenkomplex: "
-          + topicalarea.value + "\">" + topicalarea.value + "</a></li>") 
+          + topicalarea.value + "\">" + topicalarea.value + "</a></li>"
+        $("#result-list").append(listItem)
       }
     }
   }
@@ -148,8 +148,9 @@ var eView = new function () {
   /** Methods to access eduzen and accesscontrol REST-Services **/
 
   this.loadTopicalAreasByLV = function(id) {
-    return dmc.get_topic_related_topics(id, {"others_topic_type_uri": "tub.eduzen.topicalarea", 
+    var topicalareas = dmc.get_topic_related_topics(id, {"others_topic_type_uri": "tub.eduzen.topicalarea", 
       "assoc_type_uri": "tub.eduzen.lecture_content"})
+    return (topicalareas.total_count > 0) ? topicalareas.items : undefined
   }
 
   this.loadExcerciseTextsForTopicalarea = function () {
