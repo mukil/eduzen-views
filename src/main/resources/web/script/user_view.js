@@ -21,7 +21,7 @@ var uView = new function () {
     } else {
       uView.renderUsername()
       user.loadUserAccount()
-      // uView.renderUserAccount()
+      uView.renderUserAccount()
       uView.renderHelpLink()
     }
     // registering handler
@@ -63,13 +63,13 @@ var uView = new function () {
     var password = user.account.composite['dm4.accesscontrol.password'].value
     $(".pwdfield").val(password)
     $(".pwdsave.button").click(uView.submitPassword)
-    var html = "<p class=\"buffer\">"
+    /** var html = "<p class=\"buffer\">"
         + "  <label for=\"mailfield\">Your current mailbox</label><span class=\"mailedit button\">Edit</span>"
         + "  <input name=\"mailfield\" class=\"mailfield\" type=\"text\" disabled=\"disabled\""
         + "    placeholder=\"E-Mail\"></input><br/>"
         + "  <span class=\"emailsave button\">Save</span></p>"
-    $("#user-form").append(html)
-    $(".emailsave.button").hide()
+    $("#user-form").append(html) 
+    $(".emailsave.button").hide()**/
     // ### display console.log(user.account)
   }
 

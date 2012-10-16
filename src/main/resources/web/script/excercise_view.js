@@ -98,6 +98,7 @@ var eView = new function () {
     $("#header").append("<p class=\"buffer\"><b class=\"label\">Dies ist deine pers&ouml;nliche &Uuml;bersicht "
       + "&uuml;ber alle Themenkomplexe die in dieser Pr&uuml;fung abgefragt werden k&ouml;nnen</b></p>")
     if ($("#result-list").length == 0) $("#content").append("<ol id=\"result-list\"></ol>")
+    eView.currentTopicalareas.sort(eView.topicLabelCompare)
     for (i = 0; i < eView.currentTopicalareas.length; i++) {
       var topicalarea = eView.currentTopicalareas[i]
       var lectureId = eView.currentLecture.id
@@ -130,6 +131,19 @@ var eView = new function () {
     console.log("excerciseId => " + eId + " userId => " + uId)
     window.location.href = host + "/eduzen/view/lecture/" + eView.currentLecture.id
       + "/topicalarea/" + eView.currentTopicalarea.id + "/etext/" + eId
+  }
+
+  /** Exercise View Helper Methods */
+
+  this.topicLabelCompare = function(a, b) {
+    // compare "a" and "b" in some fashion, and return -1, 0, or 1
+    var nameA = a.value
+    var nameB = b.value
+    if (nameA < nameB) // sort string ascending
+        return -1
+    if (nameA > nameB)
+        return 1
+    return 0 //default return value (no sorting)
   }
 
   /** HTML5 History API utility methods **/
@@ -172,7 +186,7 @@ var eView = new function () {
         + " f&uuml;r diesen Themenkomplex in deiner Lehrveranstaltung definiert.</b></p>")
         .insertBefore("#result-list")
     }
-    
+    excercise_texts.sort(eView.topicLabelCompare)
     for (i = 0; i < excercise_texts.length; i++) {
       var e_text = excercise_texts[i]
       var excercise_text = dmc.get_topic_by_id(e_text.id, true)

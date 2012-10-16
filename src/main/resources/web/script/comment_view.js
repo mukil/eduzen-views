@@ -160,6 +160,7 @@ var cView = new function () {
       var excercise = cView.allExcercises[item]
       var numberOfApproaches = excercise.composite["tub.eduzen.approach"].length
       var submittedAt = excercise.composite["tub.eduzen.approach"][0].composite["tub.eduzen.timeframe_note"].value
+      var exercise_text_name = excercise.composite["tub.eduzen.excercise_text"].value
       var submitter = cView.getSubmitterOfExcercise(excercise.id).value
       var status = cView.getExcerciseState(excercise.id)
       var excerciseState = dict.stateName(status.excercise_state)
@@ -167,7 +168,8 @@ var cView = new function () {
       var itemString = "<li class=\"taken-excercise\"><div class=\"name "+ excercise.id +"\"><span class=\"submitter\">"
         + submitter +"</span>&nbsp;&nbsp;&nbsp;<span class=\"count\">"+ numberOfApproaches +". Versuch</span>"
         + "<span class=\"state\">&Uuml;bung: "+ excerciseState +"</span>"
-        + "<span class=\"quest-state\">Aufgabenstellung: "+ questState +"</span></div></li>"
+        + "<span class=\"quest-state\">Aufgabenstellung: \""+ exercise_text_name 
+        +"\" "+ questState +"</span></div></li>"
       $("#all-excercises").append(itemString)
       $(".name."+ excercise.id).click(create_excercise_handler(excercise))
     }

@@ -473,6 +473,12 @@ body.eduzen {
     margin-top: 10px;
 }
 
+ul.options li {
+    line-height: 1.6em;
+    list-style-type: none;
+    margin-left: 0px;
+}
+
 li.comment,
 li.approach {
     list-style-type: none;
@@ -587,11 +593,15 @@ li.approach {
 
 
 .eduzen .excercise-text.selected {
-    border: 1px solid #0067c7;
-    color: #000; margin: 4px; padding: 4px;
+    background-color: #2486bb;
+    color: #fff; margin: 4px; padding: 4px;
     font-weight: normal;
+    text-decoration: none;
 }
 
+.eduzen .excercise-text.selected a {
+    text-decoration: none;
+}
 
 .eduzen .topicalareaname.selected {
     background-color: #99cc00;
