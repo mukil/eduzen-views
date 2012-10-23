@@ -8,9 +8,11 @@ function user() {
     var dmc = new RESTClient(host + serviceURL)
 
     this.user = undefined
+    this.username = undefined
     this.identity = undefined
     this.account = undefined
     this.view = undefined
+    this.lectures = undefined
 
     /** The RESTClient-methods to deal with a user **/
 
@@ -29,13 +31,25 @@ function user() {
     }
 
     this.loadLecturesParticipating = function () {
-        // fixme
-        return dmc.get_topic_related_topics(user.account.id, {"others_topic_type_uri": "tub.eduzen.lecture", 
+        if (user.identity == undefined) return undefined
+        var lectures = dmc.get_topic_related_topics(user.identity.id, {"others_topic_type_uri": "tub.eduzen.lecture", 
             "assoc_type_uri": "tub.eduzen.participant"})
+        if (lectures.total_count > 0) user.lectures = lectures.items
     }
 
     this.getCurrentUser = function () {
-        self.user = dmc.request("GET", "/accesscontrol/user", undefined, undefined, undefined, false)
+        self.username = dmc.request("GET", "/accesscontrol/user", undefined, undefined, "text")
+        if (self.username != undefined && self.username != "") {
+          return self.getLoggedInUser()
+        } else {
+          return undefined
+        }
+    }
+
+    this.getLoggedInUser = function () {
+        self.user = dmc.request("GET",
+          "/core/topic/by_value/dm4.accesscontrol.username/"+ encodeURIComponent(self.username, "UTF-8"), undefined,
+          undefined, false)
         return (self.user == undefined) ? undefined : self.loadUserIdentity()
     }
 
@@ -50,16 +64,27 @@ function user() {
         return logout
     }
 
+    this.clearHeader = function () {
+        $("#header .title").empty()
+        console.log("cleared header")
+    }
+
     this.renderLogin = function (view) {
         self.view = view
-        var html = "<br/><p class=\"buffer\">Authentifizierung ben&ouml;tigt</a><br/></p>"
-          html += "<form id=\"user-form\" name=\"search\" action=\"javascript:self.loginHandler()\"><p class=\"buffer\">"
+        var html = "<br/><p class=\"buffer\"><b class=\"label\">Herzlich Willkommen auf der EducationZEN Online"
+            + " &Uuml;bungsplattform zur Unterst&uuml;tzung der Lehre an der TU Berlin</b><br/><br/>"
+            + "Authentifizierung ben&ouml;tigt</a><br/></p>"
+            + "<form id=\"user-form\" name=\"search\" action=\"javascript:self.loginHandler()\"><p class=\"buffer\">"
             + "  <label for=\"namefield\">Your username</label>"
             + "  <input name=\"namefield\" class=\"pwdfield\" type=\"text\" placeholder=\"Username\"></input><br/>"
             + "  <label for=\"pwdfield\">Your password</label>"
             + "  <input name=\"pwdfield\" class=\"pwdfield\" type=\"password\" placeholder=\"Password\"></input><br/><br/>"
             + "  <span class=\"login btn\" title=\"do login\">Login</span><br/><br/></p>"
-            + "<p id=\"message\" class=\"buffer failed\"></p></form>"
+            + "<p id=\"message\" class=\"buffer failed\"></p><br/>"
+            + "<br/><p class=\"buffer\"><b class=\"label\">Weitere Informationen zu unserem Projekt und wie du "
+            + "mitmachen kannst erh&auml;ltst du "
+            + "auf <a class=\"btn\" href=\"https://www.eduzen.tu-berlin.de\">unserer Projekt-Webseite.</a><br/>"
+            + "</b></p></form><br/>"
         $(".title").html(html)
         $(".login.btn").click(self.loginHandler)
         $("[name=pwdfield]").keypress(function (e) {
@@ -76,6 +101,7 @@ function user() {
         try {
             self.login(authorization())  // throws 401 if login fails
             show_message("Login OK", "ok")
+            self.clearHeader()
             self.view.initViews()
         } catch (e) {
             show_message("Login failed", "failed")
@@ -89,7 +115,7 @@ function user() {
 
         function show_message(message, css_class, callback) {
             $("#message").fadeOut(200, function() {
-                $(this).text(message).addClass(css_class).fadeIn(1000, callback)
+                $(this).text(message).removeClass().addClass(css_class).fadeIn(1000, callback)
             })
         }
 

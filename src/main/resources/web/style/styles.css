@@ -1,6 +1,7 @@
 /** Some original style defs **/
 
-/** strong-blue: #0067c7; turquoise: #12b4d7; some-blue: #2486bb; blue: #2272AD; some-yellow: #ffc700; lime: #99cc00; */
+/** strong-blue: #0067c7; turquoise: #12b4d7; blue-grey-tone: #7397bc;
+    some-blue: #2486bb; blue: #2272AD; some-yellow: #ffc700; lime: #99cc00; */
 
 .eduzen {
     font-family: Helvetica Neue, Arial, sans-serif;
@@ -433,9 +434,8 @@ body.eduzen {
     margin: 0px;
 }
 
-.eduzen .lecturename:active,
-.eduzen .username:active {
-    background-color: #12b4d7;
+.eduzen .lecturename:active {
+    background-color: #2486bb;
     color: #fff;
 }
 
@@ -520,6 +520,12 @@ li.approach {
     margin: 4px;
 }
 
+.eduzen #lectures-view {
+    position: relative;
+    left: 300px;
+    top: -340px;
+}
+
 .eduzen #results {
 
 }
@@ -541,17 +547,77 @@ li.approach {
     padding-top: 5px;
 }
 
+.eduzen .options {
+    
+}
+
+.eduzen .help-sign {
+    color: #7397bc;
+    font-weight: bold;
+    font-size: 14px;
+    position: fixed; right: 10px; top: 10px;
+    text-decoration: none;
+    padding: 6px;
+}
+
+.eduzen .help-sign:hover {
+    background-color: #2272AD;
+    border: 1px solid #2272AD;
+    color: #fff;
+}
+
+.eduzen .help-sign:active {
+    background-color: #ffc700;
+    border: 1px solid #ffc700;
+}
+
+.eduzen .help-sign {
+    border: 1px solid #ffc700;
+}
+
+.eduzen .topicalarea-resources {
+    margin-top: 40px;
+}
+
 /** Listing / List Item Options **/
+
+.eduzen #lectures-view {
+    width: 50%;
+}
+
+.eduzen ul.web-resources {
+    padding-left: 0px;
+    margin-left: 25px;
+    margin-top: 20px;
+    margin-right: 25px;
+}
+
+.eduzen li.web-resource {
+    padding-left: 0px;
+    list-style-type: none;
+}
+
+.eduzen li.web-resource a.btn p {
+    margin: 0px; padding: 0px;
+    line-height: 1em; display: inline;
+}
+
+.eduzen li.web-resource a img,
+.eduzen li.web-resource a{
+    padding-right: 5px;
+}
+
+.eduzen #lectures li {
+    padding-left: 0px;
+    list-style-type: none;
+    margin-top: 40px; display: inline-block;
+}
 
 .eduzen .approach-list,
 .eduzen #taken-excercises,
 .eduzen #all-excercises {
     padding-left: 0px;
     list-style-type: none;
-}
-
-.eduzen .options {
-    
 }
 
 .eduzen ol li {
@@ -608,17 +674,21 @@ li.approach {
     color: #fff;
 }
 
-
 .eduzen .failed {
     padding: 4px;
     color: #ff0000;
+}
+
+.eduzen .ok {
+    padding: 4px;
+    color: #00ff00;
 }
 
 
 /** General Button / Inputfield Styles **/
 
 .eduzen .btn {
-    border: 1px solid #12B4D7;
+    border: 1px solid #0067c7;
     padding: 4px;
     margin-left: 4px;
     cursor: pointer;
@@ -633,6 +703,14 @@ li.approach {
 
 .eduzen .btn.username {
     font-weight: bold;
+}
+
+.eduzen .btn {
+    border: 1px solid #7397bc;
+}
+
+.eduzen .web-resource .btn:active {
+    background-color: #7397bc;
 }
 
 .eduzen .btn.login,
@@ -653,7 +731,7 @@ li.approach {
 }
 
 .eduzen .btn:active {
-    background-color: #0067c7;
+    background-color: #0067c7; /** #7397bc; **/
     color: #fff;
 }
 

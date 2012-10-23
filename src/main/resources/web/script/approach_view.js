@@ -29,6 +29,7 @@ var aView = new function () {
   // personal work history for this excercise-text
   this.hasExerciseHistory = false
   this.hasSampleSolution = false
+  this.webResources = undefined
   this.allExcercises = new Array()
   this.existingComments = new Array()
   // personal state of an excercise-text can be
@@ -132,7 +133,8 @@ var aView = new function () {
             } else if (subViewId === "submitted") {
               aView.renderOptionsAfterSubmission()
             } else if (subViewId == undefined) {
-              // start view / overview for an exercise-text
+              // start view / overview for an exercise-text / load contents if available
+              aView.webResources = aView.loadWebResourcesForExerciseText(aView.currentExcerciseText.id)
               aView.renderOptionsForQuest()
             }
           }
@@ -172,8 +174,10 @@ var aView = new function () {
       user.renderLogin(aView)
       return false
     } else {
+      // authenticated..
       aView.renderUser()
       aView.renderPageTitle(page)
+      aView.renderHelpLink()
     }
     return true
   }
@@ -204,6 +208,19 @@ var aView = new function () {
         + ", die &Uuml;bung hat den Status <span class=\"darkstate\">\""
         + dict.stateName(excerciseState.excercise_state) + "\"</span>.</b><br/>")
       .append("<b class=\"label\">Hier siehst du all deine L&ouml;sungsversuche f&uuml;r diese &Uuml;bung</b>")
+    }
+  }
+
+  this.renderHelpLink = function() {
+    var mailto = "<a class=\"help-sign\" alt=\"Ihr braucht Hilfe bei einer &Uuml;bung, habt Anregungen "
+      + "oder Fragen zu dieser Web-Anwendung, schickt uns Bitte eine Mail an team@eduzen.tu-berlin.de\""
+      + "title=\"Ihr braucht Hilfe bei einer &Uuml;bung, habt Anregungen "
+      + "oder Fragen zu dieser Web-Anwendung, schickt uns Bitte eine Mail an team@eduzen.tu-berlin.de\""
+      + "href=\"mailto:team@eduzen.tu-berlin.de?subject=Anfrage an das EducationZEN-Team&body=\r"
+      + "E-Link: "+ aView.getExcerciseTextUrl() + "\r T-Link:" + aView.getTopicalareaUrl() + "\r"
+      + " NutzerIn: "+ user.username +"\">?</a>"
+    if ($(".help-sign")[0] == undefined) {
+      $("#header").append(mailto)
     }
   }
 
@@ -265,8 +282,8 @@ var aView = new function () {
       + "<br/></label>"
       + "<br/>"
     var submission = "<form name=\"approach-submission\" action=\"javascript:aView.submitApproachToExcercise()\">"
-      + "<b class=\"label\">Vorschau</b><br/><div id=\"math-preview\" class=\"math\"></div><br/>"
-      + "<textarea type=\"text\" name=\"excercise-input\" rows=\"4\" size=\"120\"></textarea><br/>"
+      + "<b class=\"label preview\" style=\"display: none;\">Vorschau</b><br/><div id=\"math-preview\" class=\"math\">"
+      + "</div><br/><textarea type=\"text\" name=\"excercise-input\" rows=\"4\" size=\"120\"></textarea><br/>"
       + "<b class=\"label\">Hinweis: Zwischen zwei \"$\"-Zeichen kannst Du hier auch direkt mit <a alt=\"Hilfeseite: "
       + "Alphabetical list of supported TeX Commands\" title=\"Hilfeseite: Alphabetical list of supported "
       + "TeX Commands\" href=\"http://www.onemathematicalcat.org/MathJaxDocumentation/TeXSyntax.htm\">$\\rm{TeX}$</a>"
@@ -280,6 +297,7 @@ var aView = new function () {
     
     // mathjax preview handling
     $input = $("[name=excercise-input]")
+    $(".label.preview").show()
     $input.keyup(function(e) {
       aView.renderApproachMathPreview($input.val())
       return function(){}
@@ -345,6 +363,7 @@ var aView = new function () {
     } else  {
       overview += "Wir haben leider noch keine beispielhafte L&ouml;sung f&uuml;r diese Aufgabenstellung.<br/><br/>"
     }
+
     if (aView.hasExerciseHistory) {
       overview += "Du kannst dir deinen <a class=\"btn option history\" href=\""
         + aView.getExcerciseTextUrl() + "/history"+"\">"
@@ -353,7 +372,39 @@ var aView = new function () {
       overview += "Du hast diese Aufgabenstellung bisher noch nicht bearbeitet.<br/><br/>"
     }
 
-    $("#content").append(overview)
+    // note: appendix of content to dom is done here in both cases, cause of current lazyness
+    if (aView.webResources != undefined) {
+      $("#content").append(overview) // doubled
+      // content resource area header
+      $("#content").append("<div class=\"topicalarea-resources\">"
+        + "<b class=\"label\">Folgende Inhalte konnte dir die"
+        + " EducationZEN-Redaktion bisher als Unterst&uuml;tzung f&uuml;r diese Aufgabenstellung zusammenstellen</b>"
+        + "<ul class=\"web-resources\"></ul></div>")
+      // content resource area body
+      aView.renderWebResourcesForExerciseText()
+    } else {
+      overview += "Die Redaktion hat bisher keine unterst&uuml;tzenden Inhalte zu diese Aufgabenstellung assoziiert."
+        + " Falls du hier evtl. helfen kannst, schicke uns Bitte eine <a href=\"mailto:team@eduzen.tu-berlin.de?"
+        + "subject=Weitere Inhalte zur Aufgabenstellung "+ aView.currentExcerciseText.value +"&body=Evtl. habe ich hier"
+        + " n&uuml;tzliche Hinweise zu unterst&uuml;tzenden Lehr-/Lerninhalten f&uuml;r die Redaktion und Seite "
+        + aView.getExcerciseTextUrl() + "\" class=\"btn mail\">Mail</a> mit Hinweisen.<br/><br/>"
+      $("#content").append(overview) // doubled
+    }
+  }
+
+  this.renderWebResourcesForExerciseText = function() {
+    if (aView.webResources != undefined) {
+      var list = $(".topicalarea-resources .web-resources")
+      console.log(aView.webResources)
+      for (webpage in aView.webResources) {
+        var link = dmc.get_topic_by_id(aView.webResources[webpage].id)
+        var name = link.composite["dm4.webbrowser.web_resource_description"].value
+        var url = link.composite["dm4.webbrowser.url"].value
+        list.append("<li class=\"web-resource\"><a class=\"btn\" href=\""+ url +"\" target=\"_blank\">"
+          + "<img border=\"0\" src=\"/de.deepamehta.webbrowser/images/earth.png\" title=\"Externer Link:"+ name +"\" "
+          + "alt=\"Externer Link:"+ name +"\">Web Resource:"+ name +"</a></li>")
+      }
+    }
   }
 
   /** Rendering all submissions of our current user **/
@@ -519,7 +570,6 @@ var aView = new function () {
   }
 
   this.renderCommentsForApproach = function(approach, numberOfApproach) {
-    console.log("   rendering all comments for approach .. ")
     $(".approach-"+ numberOfApproach).append("<ul id=\"comment-list\">")
     $("#comment-list").empty()
     var comments = aView.getCommentsForApproach(approach.id)
@@ -536,6 +586,7 @@ var aView = new function () {
         $("#comment-list").append(commentView)
       }
     }
+    aView.renderMathInContentArea()
   }
 
   this.renderCommentFormForApproach = function(approach, numberOfApproach) {
@@ -755,6 +806,12 @@ var aView = new function () {
     }
   }
 
+  this.loadWebResourcesForExerciseText = function (eTextId) {
+    var web_resources = dmc.get_topic_related_topics(eTextId, 
+      {"others_topic_type_uri": "dm4.webbrowser.web_resource", "assoc_type_uri": "tub.eduzen.content_item"})
+    return (web_resources.total_count > 0) ? web_resources.items : undefined
+  }
+
   /** Server Communications - Strictly returning raw data **/
 
   this.doCommentApproach = function(approach, value, isCorrect) {
@@ -819,7 +876,7 @@ var aView = new function () {
   this.getAuthorOfComment = function (commentId) {
     // FIXME: Ientity 
     return dmc.get_topic_related_topics(commentId,
-      {"others_topic_type_uri": "dm4.accesscontrol.username", "assoc_type_uri": "tub.eduzen.author"})
+      {"others_topic_type_uri": "tub.eduzen.identity", "assoc_type_uri": "tub.eduzen.author"})
   }
 
   this.getExerciseState = function(exerciseId) {

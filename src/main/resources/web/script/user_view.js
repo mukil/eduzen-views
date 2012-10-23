@@ -19,9 +19,12 @@ var uView = new function () {
     if (user.getCurrentUser() === undefined) {
       user.renderLogin(uView)
     } else {
+      // this inits just the users profile view
       uView.renderUsername()
       user.loadUserAccount()
       uView.renderUserAccount()
+      user.loadLecturesParticipating()
+      uView.renderParticipatingLectures()
       uView.renderHelpLink()
     }
     // registering handler
@@ -73,11 +76,35 @@ var uView = new function () {
     // ### display console.log(user.account)
   }
 
+  this.renderParticipatingLectures = function() {
+    if (user.lectures != undefined) {
+      $("#header").append("<div id=\"lectures-view\"><b class=\"label\">Hier eine Liste von Lehrveranstaltungen an denen "
+        + "du gerade teilnimmst, bzw. einmal teilgenommen hast:</b><br/><ul id=\"lectures\"></ul></div>")
+      for (lv in user.lectures) {
+        var lecture = user.lectures[lv]
+        var courseName = uView.getNameOfCourse(lecture.id).items[0].value
+        var item = "<li id=\"lecture\"><a class=\"btn lecturename\" href=\""
+          + host +"/eduzen/view/lecture/"+ lecture.id +"\">"+ courseName +" "+ lecture.value +"</a></li>"
+        $("#lectures").append(item)
+      }
+    } else {
+      // do render hint for administrative help needed, user is not participating in any lecture currently
+      $("#header").append("<div id=\"lectures-view\"><b class=\"label\">Aktuell bist Du keiner Lehrveranstaltung als"
+        + " TeilnehmerIn zugewiesen, Bitte wende Dich daher einmal an unsere <a href=\"mailto:team@eduzen.tu.berlin.de?"
+        + "subject=Anfrage an die Account-Redaktion von NutzerIn "+ user.username +"\" class=\"btn\">Account-Redaktion"
+        + "</a> mit dem Titel der Lehrveranstaltung f&uuml;r die Du dich hier interessierst.</b></div>")
+    }
+  }
+
   this.renderHelpLink = function() {
-    var mailto = "<p class=\"buffer\">Ihr braucht Hilfe bei einer &Uuml;bung, habt Anregungen oder Fragen zu dieser "
-      + " Web-Anwendung, schickt uns einfach eine Mail an <a class=\"btn mail\" title=\"Mail an EducationZEN Hilfe\" "
-      + "alt=\"Mail an Team\" href=\"mailto:team@eduzen.tu-berlin.de\">team@eduzen.tu-berlin.de</a> - Danke!<br/></p>"
-    $("#header").append(mailto)
+    var mailto = "<p class=\"buffer\"><b class=\"label\">Ihr braucht Hilfe bei einer &Uuml;bung, habt Anregungen "
+      + "oder Fragen zu dieser Web-Anwendung, schickt uns einfach eine Mail an <a class=\"btn mail\" "
+      + "title=\"Mail an EducationZEN Hilfe\" "
+      + "alt=\"Mail an Team\" href=\"mailto:team@eduzen.tu-berlin.de?subject=Anfrage an das EducationZEN-Team\">"
+      + "team@eduzen.tu-berlin.de</a> - Danke!</b><br/><br/></p>"
+    if ($(".btn.mail")[0] == undefined) {
+      $("#header").append(mailto)
+    }
   }
 
   this.pwdHandler = function (e) {
@@ -117,6 +144,11 @@ var uView = new function () {
     }
     // update gui
     uView.initView()
+  }
+
+  this.getNameOfCourse = function (lectureId) {
+    return dmc.get_topic_related_topics(lectureId,
+      {"others_topic_type_uri": "tub.eduzen.course", "assoc_type_uri": "dm4.core.composition"})
   }
 
 }

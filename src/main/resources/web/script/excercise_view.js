@@ -17,6 +17,7 @@ var eView = new function () {
   this.currentLecture = undefined
   this.currentTopicalareas = new Array()
   this.currentTopicalarea = undefined
+  this.webResources = undefined
 
   /** Excercise View Application Controler **/
 
@@ -33,31 +34,40 @@ var eView = new function () {
     var topicalareaId = undefined
 
     if (entity === "lecture") {
+      console.log("lectureId set to => " + id)
       if (commands[2] === "topicalarea") {
         topicalareaId = commands[3]
       }
-      eView.initLectureView(id, topicalareaId)
+      eView.initLectureView(id, topicalareaId) // selected lectures is set as currentlecture, if logged in
+      // lecture id is set
     } else if (entity === "start") {
+      // lecture id is not set
       // ### todo: laod available lectures via "tub.eduzen.identity", implement this in uView
-      eView.initLectureView(eView.defaultLecture)
+      eView.initLectureView()
     }
   }
 
   this.initLectureView = function (lectureId, topicalareaId) {
-    eView.currentLecture = dmc.get_topic_by_id(lectureId, true)
-    if (eView.currentLecture != undefined) {
-      eView.renderHeader()
-      if (user.identity == undefined) {
-        console.log("Please login first.")
-      } else {
+    eView.renderHeader()
+    // authentication check, if user is really participating in lecture (?)
+    if (lectureId != undefined) {
+      // user is logged in, check if part of this lecture, and show it
+      user.loadLecturesParticipating()
+      if (!eView.isParticipantOfLecture(lectureId)) {
+        $("#header").append("<p class=\"buffer\"><b class=\"label\">You are not a participant of this lecture.</b></p>")
+        throw new Error("Authentication failed")
+      }
+      eView.currentLecture = dmc.get_topic_by_id(lectureId, true)
+      if (eView.currentLecture != undefined) {
+        eView.renderHeader()
         eView.renderLecture()
         if (topicalareaId != undefined) {
           // ### FIXME: check access if topicalarea is really part of this lecture
           eView.currentTopicalarea = dmc.get_topic_by_id(topicalareaId)
           console.log("  load also topicalarea-view for => " + topicalareaId)
-          // ### eView.loadSomeContentForThisTopicalarea()
-          // ### eView.renderSomeContentForThisTopicalarea()
+          eView.webResources = eView.loadWebResourcesForTopicalarea(topicalareaId)
           eView.renderTopicalarea()
+          eView.renderWebResourcesForTopicalarea()
           // load excercise-texts for this topicalarea here, instead of having subsequent render/load/render calls
           // ### eView.loadExcerciseTextsForTopicalarea()
           // ### eView.renderExcerciseText()
@@ -69,6 +79,23 @@ var eView = new function () {
           }
         }
       }
+    } else {
+      // user is logged in, check if part of any lecture, then show any of it
+      user.loadLecturesParticipating()
+      if (user.lectures != undefined) {
+        // eView.renderParticipatingLectures
+        eView.initLectureView(user.lectures[0].id)
+      } else {
+        if (user.user != undefined) {
+        console.log(user.user)
+        // do render hint for administrative help needed, user is not participating in any lecture currently
+        $("#header .title").append("<p class=\"buffer\"><b class=\"label\">Aktuell bist Du keiner Lehrveranstaltung als"
+          + " Teilnehmerin bzw. Teilnehmer zugewiesen, bitte wende Dich daher einmal an unsere "
+          + "<a href=\"mailto:team@eduzen.tu.berlin.de?subject=Anfrage an die Account-Redaktion von NutzerIn "
+          + user.username +"\" class=\"btn\">Account-Redaktion </a> mit dem Titel der Lehrveranstaltung "
+          + "f&uuml;r welche Du dich interessierst.</b></p>")
+        }
+      }
     }
   }
 
@@ -77,14 +104,49 @@ var eView = new function () {
     if (user.getCurrentUser() == undefined) {
       $("#content").empty()
       user.renderLogin(eView)
+      eView.renderHelpLink()
     } else {
+      // authenticated..
       eView.renderUser()
+      eView.renderHelpLink()
+    }
+  }
+
+  this.renderHelpLink = function() {
+    var mailto = "<a class=\"help-sign\" alt=\"Ihr braucht Hilfe bei einer &Uuml;bung, habt Anregungen "
+      + "oder Fragen zu dieser Web-Anwendung, schickt uns Bitte eine Mail an team@eduzen.tu-berlin.de\""
+      + "title=\"Ihr braucht Hilfe bei einer &Uuml;bung, habt Anregungen "
+      + "oder Fragen zu dieser Web-Anwendung, schickt uns Bitte eine Mail an team@eduzen.tu-berlin.de\""
+      + "href=\"mailto:team@eduzen.tu-berlin.de?subject=Anfrage an das EducationZEN-Team&body=\r"
+      + "Auf Seite: " + window.location.href + "\r NutzerIn: "+ user.username +"\">?</a>"
+    if ($(".help-sign")[0] == undefined) {
+      $("#header").append(mailto)
     }
   }
 
   this.renderUser = function () {
     $(".title").html("<p class=\"buffer\">Hi <a href=\"/eduzen/view/user/" + user.user.id + "\" class=\"btn username\"> "
       + user.user.value + "</a>.&nbsp;</p>")
+  }
+
+  this.renderParticipatingLectures = function() {
+    if (user.lectures != undefined) {
+      $("#header").append("<div id=\"lectures-view\"><b class=\"label\">Hier eine Liste deiner Lehrveranstaltungen</b>"
+        + "<br/><ul id=\"lectures\"></ul></div>")
+      for (lv in user.lectures) {
+        var lecture = user.lectures[lv]
+        var courseName = uView.getNameOfCourse(lecture.id).items[0].value
+        var item = "<li id=\"lecture\"><a class=\"btn lecturename\" href=\""
+          + host +"/eduzen/view/lecture/"+ lecture.id +"\">"+ courseName +" "+ lecture.value +"</a></li>"
+        $("#lectures").append(item)
+      }
+    } else {
+      // do render hint for administrative help needed, user is not participating in any lecture currently
+      $("#header").append("<div id=\"lectures-view\"><b class=\"label\">Aktuell bist Du keiner Lehrveranstaltung als"
+        + " TeilnehmerIn zugewiesen, Bitte wende Dich daher einmal an unsere <a href=\"mailto:team@eduzen.tu.berlin.de?"
+        + "subject=Anfrage an die Account-Redaktion von NutzerIn "+ user.username +"\" class=\"btn\">Account-Redaktion"
+        + "</a> mit dem Titel der Lehrveranstaltung f&uuml;r die Du dich hier interessierst.</div>")
+    }
   }
 
   this.renderLecture = function () {
@@ -125,15 +187,40 @@ var eView = new function () {
     // eView.renderExcerciseText()
   }
 
+  this.renderWebResourcesForTopicalarea = function() {
+    if (eView.webResources != undefined) {
+      $("#content").append("<div class=\"topicalarea-resources\"><p class=\"buffer\">"
+        + "<b class=\"label\">Folgende Inhalte konnte dir die"
+        + " EducationZEN-Redaktion bisher als Unterst&uuml;tzung f&uuml;r diesen Themenkomplex zusammenstellen</b>"
+        + "<ul class=\"web-resources\"></ul></p></div>")
+      var list = $(".topicalarea-resources .web-resources")
+      for (webpage in eView.webResources) {
+        var link = dmc.get_topic_by_id(eView.webResources[webpage].id)
+        var name = link.composite["dm4.webbrowser.web_resource_description"].value
+        var url = link.composite["dm4.webbrowser.url"].value
+        list.append("<li class=\"web-resource\"><a class=\"btn\" href=\""+ url +"\" target=\"_blank\">"
+          + "<img border=\"0\" src=\"/de.deepamehta.webbrowser/images/earth.png\" title=\"Externer Link:"+ name +"\" "
+          + "alt=\"Externer Link:"+ name +"\">Web Resource:"+ name +"</a></li>")
+      }
+    }
+  }
+
+
   /** Controler to take on an excercise **/
 
   this.showExcerciseTextForUser = function (eId, uId) {
-    console.log("excerciseId => " + eId + " userId => " + uId)
     window.location.href = host + "/eduzen/view/lecture/" + eView.currentLecture.id
       + "/topicalarea/" + eView.currentTopicalarea.id + "/etext/" + eId
   }
 
   /** Exercise View Helper Methods */
+
+  this.isParticipantOfLecture = function (lectureId) {
+    for (lecture in user.lectures) {
+      if (user.lectures[lecture].id == lectureId) return true
+    }
+    return false
+  }
 
   this.topicLabelCompare = function(a, b) {
     // compare "a" and "b" in some fashion, and return -1, 0, or 1
@@ -167,6 +254,12 @@ var eView = new function () {
     return (topicalareas.total_count > 0) ? topicalareas.items : undefined
   }
 
+  this.loadWebResourcesForTopicalarea = function (topicalAreaId) {
+    var web_resources = dmc.get_topic_related_topics(topicalAreaId, 
+      {"others_topic_type_uri": "dm4.webbrowser.web_resource", "assoc_type_uri": "tub.eduzen.content_item"})
+    return (web_resources.total_count > 0) ? web_resources.items : undefined
+  }
+
   this.loadExcerciseTextsForTopicalarea = function () {
     // load association between lecture and topicalarea
     // FIXME: an ET could be many times lecture_content? as soon as we support multiple-lectures
@@ -176,11 +269,12 @@ var eView = new function () {
       { "others_topic_type_uri": "tub.eduzen.excercise_text" }).items
 
     if (excercise_texts.length > 1) {
-      $("<p class=\"buffer\"><b class=\"label\">Das sind die "
-        + excercise_texts.length + " Aufgabenstellung/en zum meistern dieses Themenkomplexes</b></p>").insertBefore("#result-list")
+      $("<p class=\"buffer\"><b class=\"label\">Diese "
+        + excercise_texts.length + " Aufgabenstellung/en sind notwendig, um diesen Themenkomplex abzuschlie&szlig;en"
+        + "</b></p>").insertBefore("#result-list")
     } else if (excercise_texts.length == 1) {
-      $("<p class=\"buffer\"><b class=\"label\">Hier ist die Aufgabenstellung zum meistern dieses Themenkomplexes</b></p>")
-        .insertBefore("#result-list")
+      $("<p class=\"buffer\"><b class=\"label\">Dies ist die zu l&ouml;sende Aufgabenstellung um diesen Themenkomplex"
+        + " abzuschlie&szlig;en</b></p>").insertBefore("#result-list")
     } else {
       $("<p class=\"buffer\"><b class=\"label\">Es wurden leider noch keine Aufgabenstellungen "
         + " f&uuml;r diesen Themenkomplex in deiner Lehrveranstaltung definiert.</b></p>")

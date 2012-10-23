@@ -33,7 +33,7 @@ var cView = new function () {
 
   this.initViews = function () {
     // This view routes on "/commenting"
-    cView.renderHeader()
+    cView.renderHeader() // should trow error if user.user is unset
 
     if (cView.hasEditorsMembership(user.user.id)) {
 
@@ -131,6 +131,7 @@ var cView = new function () {
     $("#bottom").hide() // hide notification bar
     if (user.getCurrentUser() == undefined) {
       user.renderLogin(cView)
+      throw new Error("Unauthenticated. Please login first.")
     } else {
       // cView.renderPageTitle(page)
       cView.renderMenu()
@@ -147,6 +148,10 @@ var cView = new function () {
   this.renderMathInContentArea = function () {
     // typeset all elements containing TeX to SVG or HTML in default area #content
     MathJax.Hub.Typeset()
+  }
+
+  this.getFeedbackOverviewUrl = function () {
+    return host + "/eduzen/view/commenting/new"
   }
 
   /** Rendering all current submissions of any user **/
@@ -238,9 +243,10 @@ var cView = new function () {
         + user.user.id + "\" class=\"username\"> "+ user.user.value +"</a><b class=\"label\">. "
         + "Hier siehst du alle L&ouml;sungsvorschl&auml;ge von \""+ user.identity.value +"\" zur "
         + "&Uuml;bung der Aufgabenstellung \""+ excerciseText.value +"\". "
-        + "Die Aufgabenstellung ist <span class=\"darkstate\">\""+ dict.stateName(excerciseState.quest_state) +"\"</span>"
-        + ", die &Uuml;bung ist <span class=\"darkstate\">\""+ dict.stateName(excerciseState.excercise_state) 
-        +".\"</span></b><a class=\"btn back\" href=\"javascript:history.back()\">Zur&uuml;ck zur &Uuml;bersicht</a></p>")
+        + "Die Aufgabenstellung ist <span class=\"darkstate\">\""+ dict.stateName(excerciseState.quest_state)
+        + "\"</span>, die &Uuml;bung ist <span class=\"darkstate\">\""+ dict.stateName(excerciseState.excercise_state) 
+        +".\"</span></b><a class=\"btn back\" href=\""+ cView.getFeedbackOverviewUrl()
+        +"\">Zur&uuml;ck zur &Uuml;bersicht</a></p>")
     // Page Body
     $("#content").html("<b class=\"label\">Aufgabenstellung</b><br/>" + excerciseDescription.value +"<br/><br/>")
     $("#content").append("<b class=\"label\">Aufgabe</b><br/>" + excerciseObject.value +"<br/><br/>")
@@ -289,7 +295,6 @@ var cView = new function () {
   }
 
   this.renderCommentsForApproach = function(approach, numberOfApproach) {
-    console.log("   rendering all comments for approach .. ")
     $(".approach-"+ numberOfApproach).append("<ul id=\"comment-list\">")
     $("#comment-list").empty()
     var comments = cView.getCommentsForApproach(approach.id)
@@ -306,19 +311,29 @@ var cView = new function () {
         $("#comment-list").append(commentView)
       }
     }
+    cView.renderMathInContentArea()
   }
 
   this.renderCommentFormForApproach = function(approach, numberOfApproach) {
     $("#new-comment").remove()
     var form = "<div id=\"new-comment\"><b class=\"label\">Inhalt deines Kommentars</b>"
       + "<form name=\"comment\" id=\"new-comment-form\" action=\"javascript:void(0);\">"
-      + "<input class=\"inputfield\" type=\"text\" size=\"80\" rows=\"4\"></input><br/>"
-      + "<label for=\"is-correct\">Den L&ouml;sungsvorschlag find ich korrekt"
+      + "<b class=\"label preview\" style=\"display: none;\">Vorschau</b><br/><div id=\"math-preview\" class=\"math\">"
+      + "</div><br/><textarea class=\"inputfield\" name=\"comment-input\" type=\"text\" size=\"120\" rows=\"4\">"
+      + "</textarea><br/><label for=\"is-correct\">Den L&ouml;sungsvorschlag find ich korrekt"
       + "<input class=\"is-correct\" name=\"is-correct\" type=\"checkbox\"></input></label>"
       + "<input class=\"btn comment\" type=\"submit\" value=\"Kommentieren\"></input>"
       + "</form></div>"
     $(".approach-"+ numberOfApproach).append(form)
     $("#new-comment-form").submit(do_comment_handler(approach))
+
+    // mathjax preview handling
+    $input = $("[name=comment-input]")
+    $(".label.preview").show()
+    $input.keyup(function(e) {
+      cView.renderApproachMathPreview($input.val())
+      return function(){}
+    })
 
     function do_comment_handler(approach) {
       return function() {
@@ -327,6 +342,11 @@ var cView = new function () {
         cView.doCommentApproach(approach, value, correctness)
       }
     }
+  }
+
+  this.renderApproachMathPreview = function(value) {
+    $("#math-preview").text(value)
+    MathJax.Hub.Queue(["Typeset", MathJax.Hub]);
   }
   
   this.renderFileAttachment = function(approachId, attachment, numberOfApproach) {
@@ -518,7 +538,7 @@ var cView = new function () {
 
   this.getAuthorOfComment = function (commentId) {
     return dmc.get_topic_related_topics(commentId,
-      {"others_topic_type_uri": "dm4.accesscontrol.username", "assoc_type_uri": "tub.eduzen.author"})
+      {"others_topic_type_uri": "tub.eduzen.identity", "assoc_type_uri": "tub.eduzen.author"})
   }
 
   this.getFileContent = function (topicId) {
