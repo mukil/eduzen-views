@@ -49,6 +49,7 @@ var eView = new function () {
 
   this.initLectureView = function (lectureId, topicalareaId) {
     eView.renderHeader()
+    eView.setupMathJaxRenderer()
     // authentication check, if user is really participating in lecture (?)
     if (lectureId != undefined) {
       // user is logged in, check if part of this lecture, and show it
@@ -97,6 +98,7 @@ var eView = new function () {
         }
       }
     }
+    eView.renderMathInContentArea()
   }
 
   this.renderHeader = function () {
@@ -127,6 +129,12 @@ var eView = new function () {
   this.renderUser = function () {
     $(".title").html("<p class=\"buffer\">Hi <a href=\"/eduzen/view/user/" + user.user.id + "\" class=\"btn username\"> "
       + user.user.value + "</a>.&nbsp;</p>")
+  }
+
+  this.renderMathInContentArea = function () {
+    // typeset all elements containing TeX to SVG or HTML in default area #content
+    // MathJax.Hub.Typeset()
+    MathJax.Hub.Queue(["Typeset", MathJax.Hub]);
   }
 
   this.renderParticipatingLectures = function() {
@@ -348,6 +356,29 @@ var eView = new function () {
     return dmc.get_topic_related_topics(lectureId,
       {"others_topic_type_uri": "tub.eduzen.course", "assoc_type_uri": "dm4.core.composition"})
   }
+
+  this.setupMathJaxRenderer = function() {
+    MathJax.Ajax.config.root = host + "/de.tu-berlin.eduzen.mathjax-renderer/script/vendor/mathjax"
+    MathJax.Hub.Config({
+        "extensions": ["tex2jax.js", "mml2jax.js", "MathEvents.js", "MathZoom.js", "MathMenu.js", "toMathML.js",
+           "TeX/noErrors.js","TeX/noUndefined.js","TeX/AMSmath.js","TeX/AMSsymbols.js", "FontWarnings.js"],
+        "jax": ["input/TeX", "output/SVG"], // "input/MathML", "output/HTML-CSS", "output/NativeMML"
+        "tex2jax": { "inlineMath": [["$","$"],["\\(","\\)"]] },
+        "menuSettings": {
+            "zoom": "Double-Click", "mpContext": true, "mpMouse": true, "zscale": "200%", "texHints": true
+        },
+        "errorSettings": {
+            "message": ["[Math Error]"]
+        },
+        "displayAlign": "left",
+        "SVG": { "blacker": 8, "scale": 110 },
+        "v1.0-compatible": false,
+        "skipStartupTypeset": false,
+        "elements": ["content", "header"]
+    });
+    MathJax.Hub.Configured() // bootstrap mathjax.js lib now
+  }
+
 
 }
 

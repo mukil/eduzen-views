@@ -1000,7 +1000,7 @@ var aView = new function () {
         "SVG": { "blacker": 8, "scale": 110 },
         "v1.0-compatible": false,
         "skipStartupTypeset": false,
-        "elements": ["content"]
+        "elements": ["content", "header"]
     });
     MathJax.Hub.Configured() // bootstrap mathjax.js lib now
   }
