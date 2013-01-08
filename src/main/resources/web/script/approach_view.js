@@ -2,7 +2,7 @@
  * A prototype to list contents of a Lehrveranstaltung and Excercises.
  **/
 
-var host = "http://localhost:8080"
+var host = ""
 var serviceURL = "/core"
 var authorClientURL = "/de.deepamehta.webclient"
 var dmc = new RESTClient(host + serviceURL)
@@ -216,9 +216,9 @@ var aView = new function () {
       + "oder Fragen zu dieser Web-Anwendung, schickt uns Bitte eine Mail an team@eduzen.tu-berlin.de\""
       + "title=\"Ihr braucht Hilfe bei einer &Uuml;bung, habt Anregungen "
       + "oder Fragen zu dieser Web-Anwendung, schickt uns Bitte eine Mail an team@eduzen.tu-berlin.de\""
-      + "href=\"mailto:team@eduzen.tu-berlin.de?subject=Anfrage an das EducationZEN-Team&body=\r"
-      + "E-Link: "+ aView.getExcerciseTextUrl() + "\r T-Link:" + aView.getTopicalareaUrl() + "\r"
-      + " NutzerIn: "+ user.username +"\">?</a>"
+      + "href=\"mailto:team@eduzen.tu-berlin.de?subject=Frage an das EducationZEN-Team&body=Hilfe mit ... "
+      + "E-Link: "+ aView.getExcerciseTextUrl() + "... T-Link:" + aView.getTopicalareaUrl() + " ... "
+      + " Mein Nutzername: "+ user.username +"\">?</a>"
     if ($(".help-sign")[0] == undefined) {
       $("#header").append(mailto)
     }
@@ -278,19 +278,20 @@ var aView = new function () {
   this.renderApproachForm = function  () {
     var uploadPath = "/"
     // ### 
-    var submissionLabel = "<label for=\"excercise-input\">Bitte trage die L&ouml;sung bzw. den L&ouml;sungsweg in das "
-      + "<br/></label>"
-      + "<br/>"
+    var submissionLabel = "<label for=\"excercise-input\">Bitte trage deinen L&ouml;sungsansatz oder "
+      + "deine Frage an die Tutoren in das Eingabefeld ein:<br/></label><br/>"
+  
     var submission = "<form name=\"approach-submission\" action=\"javascript:aView.submitApproachToExcercise()\">"
+      + "<textarea type=\"text\" name=\"excercise-input\" rows=\"4\" size=\"120\"></textarea><br/>"
       + "<b class=\"label preview\" style=\"display: none;\">Vorschau</b><br/><div id=\"math-preview\" class=\"math\">"
-      + "</div><br/><textarea type=\"text\" name=\"excercise-input\" rows=\"4\" size=\"120\"></textarea><br/>"
+      + "</div><br/>"
       + "<b class=\"label\">Hinweis: Zwischen zwei \"$\"-Zeichen kannst Du hier auch direkt mit <a alt=\"Hilfeseite: "
       + "Alphabetical list of supported TeX Commands\" title=\"Hilfeseite: Alphabetical list of supported "
       + "TeX Commands\" href=\"http://www.onemathematicalcat.org/MathJaxDocumentation/TeXSyntax.htm\">$\\rm{TeX}$</a>"
-      + "arbeiten.</b><br/><br/><span class=\"label upload\">Alternativ kannst du auch ein Foto deiner "
-      + "handschriftlichen, aber bitte leserlichen Berechnungen abgeben. Lade dazu Bitte die Datei "
-      + "<a class=\"button upload\" href=\"#\" alt=\"Bild hochladen\ title=\"Bild hochladen\">hier hoch</a>.</span>"
-      + "<br/><br/><input type=\"submit\" value=\"Aufgabe einreichen\" class=\"button submit\"></input>"
+      + " arbeiten.</b><br/><br/><span class=\"label upload\">Alternativ kannst du auch ein Foto deiner "
+      + "handschriftlichen, aber bitte leserlichen Berechnungen abgeben. Lade dazu Bitte eine Bild-Datei(JPG, PNG, GIF)"
+      + "&nbsp;&nbsp<a class=\"button upload\" href=\"#\" alt=\"Bild hochladen\ title=\"Bild hochladen\">hier hoch</a>."
+      + "</span><br/><br/><input type=\"submit\" value=\"Absenden\" class=\"button submit\"></input>"
       + "</form>"
     $("#content").append(submissionLabel).append(submission)
     $(".button.upload").click(aView.open_upload_dialog(uploadPath, aView.handleUploadResponse))

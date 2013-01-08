@@ -2,7 +2,7 @@ function user() {
     
     var self = this
 
-    var host = "http://localhost:8080"
+    var host = ""
     var serviceURL = "/core"
     var authorClientURL = "/eduzen/view/user/123"
     var dmc = new RESTClient(host + serviceURL)
@@ -66,7 +66,6 @@ function user() {
 
     this.clearHeader = function () {
         $("#header .title").empty()
-        console.log("cleared header")
     }
 
     this.renderLogin = function (view) {
@@ -83,8 +82,9 @@ function user() {
             + "<p id=\"message\" class=\"buffer failed\"></p><br/>"
             + "<br/><p class=\"buffer\"><b class=\"label\">Weitere Informationen zu unserem Projekt und wie du "
             + "mitmachen kannst erh&auml;ltst du "
-            + "auf <a class=\"btn\" href=\"https://www.eduzen.tu-berlin.de\">unserer Projekt-Webseite.</a><br/>"
-            + "</b></p></form><br/>"
+            + "auf <a class=\"btn\" href=\"https://www.eduzen.tu-berlin.de\">unserer Projekt-Webseite.</a> "
+            + "Hier findest Du auch eine <a class=\"btn\" href=\"https://www.eduzen.tu-berlin.de/webanwendung\">"
+            + "kurze Einf&uuml;hrung in die &Uuml;bungsplattform</a>.<br/></b></p></form><br/>"
         $(".title").html(html)
         $(".login.btn").click(self.loginHandler)
         $("[name=pwdfield]").keypress(function (e) {
@@ -99,13 +99,21 @@ function user() {
         var username = $("[name=namefield]").val()
         var password = $("[name=pwdfield]").val()
         try {
-            self.login(authorization())  // throws 401 if login fails
+            // self.login(authorization()) // throws 401 if login fails
+            var authorization = authorization()
+            if (authorization == undefined) return null
+            // throws 401 if login fails
+            dmc.request("POST", "/accesscontrol/login", undefined, {"Authorization": authorization})
             show_message("Login OK", "ok")
+            console.log("login OK")
+        } catch (e) {
+            show_message("Nutzername oder Passwort ist falsch.", "failed")
+            console.log("Access denied.")
+        }
+        
+        if (user.getCurrentUser()) {
             self.clearHeader()
             self.view.initViews()
-        } catch (e) {
-            show_message("Login failed", "failed")
-            console.log("Access denied.")
         }
 
         /** Returns value for the "Authorization" header. */
@@ -115,7 +123,7 @@ function user() {
 
         function show_message(message, css_class, callback) {
             $("#message").fadeOut(200, function() {
-                $(this).text(message).removeClass().addClass(css_class).fadeIn(1000, callback)
+              $(this).text(message).removeClass().addClass(css_class).fadeIn(600, callback)
             })
         }
 

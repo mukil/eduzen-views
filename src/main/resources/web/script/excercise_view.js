@@ -2,7 +2,7 @@
  * A prototype to list contents of a Lehrveranstaltung and Excercises.
  **/
 
-var host = "http://localhost:8080"
+var host = ""
 var serviceURL = "/core"
 var authorClientURL = "/eduzen/view/user/123"
 var dmc = new RESTClient(host + serviceURL)
@@ -119,8 +119,8 @@ var eView = new function () {
       + "oder Fragen zu dieser Web-Anwendung, schickt uns Bitte eine Mail an team@eduzen.tu-berlin.de\""
       + "title=\"Ihr braucht Hilfe bei einer &Uuml;bung, habt Anregungen "
       + "oder Fragen zu dieser Web-Anwendung, schickt uns Bitte eine Mail an team@eduzen.tu-berlin.de\""
-      + "href=\"mailto:team@eduzen.tu-berlin.de?subject=Anfrage an das EducationZEN-Team&body=\r"
-      + "Auf Seite: " + window.location.href + "\r NutzerIn: "+ user.username +"\">?</a>"
+      + "href=\"mailto:team@eduzen.tu-berlin.de?subject=Frage an das eduZEN-Team&body=Hilfe mit ... "
+      + "auf Seite: " + window.location.href + "... Mein Nutzername: "+ user.username +"\">?</a>"
     if ($(".help-sign")[0] == undefined) {
       $("#header").append(mailto)
     }

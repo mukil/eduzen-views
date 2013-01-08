@@ -2,7 +2,7 @@
  * A prototype to list contents of a Lehrveranstaltung and Excercises.
  **/
 
-var host = "http://localhost:8080"
+var host = ""
 var serviceURL = "/core"
 var authorClientURL = "/de.deepamehta.webclient"
 var dmc = new RESTClient(host + serviceURL)

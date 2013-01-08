@@ -27,6 +27,10 @@
     margin-top: 20px;
 }
 
+.eduzen #user-form #message {
+    margin-left: 20px;
+}
+
 .eduzen #bottom {
     position: fixed;
     bottom: 0px; left: 0px; padding: 4px;
@@ -144,7 +148,7 @@
 .eduzen .name a {
     text-decoration: none;
     color: #000;
-    padding-top: 4px; 
+    padding-top: 4px;
     padding-bottom: 4px;
 }
 
@@ -366,6 +370,10 @@ body.eduzen {
     color: #2272AD;
 }
 
+.eduzen.commenting-view #comment-area {
+    width: 95%;
+}
+
 .eduzen.commenting-view #menu a.selected,
 .eduzen.commenting-view #menu a:hover,
 .eduzen.commenting-view #menu a:active {
@@ -373,8 +381,8 @@ body.eduzen {
     color: #fff;
 }
 
-.eduzen.approach-view .button.disabled, 
-.eduzen.approach-view .button, 
+.eduzen.approach-view .button.disabled,
+.eduzen.approach-view .button,
 .eduzen.approach-view input.button {
     padding: 4px;
 }
@@ -423,7 +431,7 @@ body.eduzen {
 }
 
 .eduzen .back,
-.eduzen .lecturename, 
+.eduzen .lecturename,
 .eduzen .username,
 .eduzen .authenticate,
 .eduzen .account {
@@ -548,7 +556,7 @@ li.approach {
 }
 
 .eduzen .options {
-    
+
 }
 
 .eduzen .help-sign {

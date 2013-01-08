@@ -1,8 +1,8 @@
-/** 
+/**
  * A prototype to list contents of a Lehrveranstaltung and Excercises.
  **/
 
-var host = "http://localhost:8080"
+var host = ""
 var serviceURL = "/core"
 var authorClientURL = "/de.deepamehta.webclient"
 var dmc = new RESTClient(host + serviceURL)
@@ -69,7 +69,7 @@ var cView = new function () {
       cView.currentExcercise = dmc.get_topic_by_id(excerciseId, true)
       cView.renderExcerciseApproachInfo()
       cView.currentExcerciseText = cView.currentExcercise.composite["tub.eduzen.excercise_text"]
-      if (cView.isSampleApproachAvailable(cView.currentExcerciseText.id)) { 
+      if (cView.isSampleApproachAvailable(cView.currentExcerciseText.id)) {
         cView.renderSampleSolutionForExcerciseText()
       }
       cView.renderMathInContentArea()
@@ -173,13 +173,13 @@ var cView = new function () {
       var itemString = "<li class=\"taken-excercise\"><div class=\"name "+ excercise.id +"\"><span class=\"submitter\">"
         + submitter +"</span>&nbsp;&nbsp;&nbsp;<span class=\"count\">"+ numberOfApproaches +". Versuch</span>"
         + "<span class=\"state\">&Uuml;bung: "+ excerciseState +"</span>"
-        + "<span class=\"quest-state\">Aufgabenstellung: \""+ exercise_text_name 
+        + "<span class=\"quest-state\">Aufgabenstellung: \""+ exercise_text_name
         +"\" "+ questState +"</span></div></li>"
       $("#all-excercises").append(itemString)
       $(".name."+ excercise.id).click(create_excercise_handler(excercise))
     }
     $("#header .runner").remove()
-    
+
     function create_excercise_handler(excercise) {
       return function () {
         cView.showExcerciseInfo(excercise.id)
@@ -206,7 +206,7 @@ var cView = new function () {
       $(".name."+ excercise.id).click(create_excercise_handler(excercise))
     }
     $("#header .runner").remove()
-    
+
     function create_excercise_handler(excercise) {
       return function () {
         cView.showExcerciseInfo(excercise.id)
@@ -227,7 +227,7 @@ var cView = new function () {
     }
   }
 
-  /** 
+  /**
     * Rendering all tries for any given excercise-text and our current user
     * TODO: remove duplicated code from #approach_view.renderExcerciseInfo
     */
@@ -244,7 +244,7 @@ var cView = new function () {
         + "Hier siehst du alle L&ouml;sungsvorschl&auml;ge von \""+ user.identity.value +"\" zur "
         + "&Uuml;bung der Aufgabenstellung \""+ excerciseText.value +"\". "
         + "Die Aufgabenstellung ist <span class=\"darkstate\">\""+ dict.stateName(excerciseState.quest_state)
-        + "\"</span>, die &Uuml;bung ist <span class=\"darkstate\">\""+ dict.stateName(excerciseState.excercise_state) 
+        + "\"</span>, die &Uuml;bung ist <span class=\"darkstate\">\""+ dict.stateName(excerciseState.excercise_state)
         +".\"</span></b><a class=\"btn back\" href=\""+ cView.getFeedbackOverviewUrl()
         +"\">Zur&uuml;ck zur &Uuml;bersicht</a></p>")
     // Page Body
@@ -318,9 +318,13 @@ var cView = new function () {
     $("#new-comment").remove()
     var form = "<div id=\"new-comment\"><b class=\"label\">Inhalt deines Kommentars</b>"
       + "<form name=\"comment\" id=\"new-comment-form\" action=\"javascript:void(0);\">"
-      + "<b class=\"label preview\" style=\"display: none;\">Vorschau</b><br/><div id=\"math-preview\" class=\"math\">"
-      + "</div><br/><textarea class=\"inputfield\" name=\"comment-input\" type=\"text\" size=\"120\" rows=\"4\">"
-      + "</textarea><br/><label for=\"is-correct\">Den L&ouml;sungsvorschlag find ich korrekt"
+      + "<div id=\"comment-area\">"
+        + "<textarea class=\"inputfield\" name=\"comment-input\" type=\"text\" size=\"120\" rows=\"4\">"
+        + "</textarea>"
+        + "<div id=\"preview-area\"><b class=\"label preview\" style=\"display: none;\">Vorschau</b>"
+        + "<div id=\"math-preview\" class=\"math\"></div></div><br/>"
+      + "</div>"
+      + "<label for=\"is-correct\">Den L&ouml;sungsvorschlag find ich korrekt"
       + "<input class=\"is-correct\" name=\"is-correct\" type=\"checkbox\"></input></label>"
       + "<input class=\"btn comment\" type=\"submit\" value=\"Kommentieren\"></input>"
       + "</form></div>"
@@ -348,7 +352,7 @@ var cView = new function () {
     $("#math-preview").text(value)
     MathJax.Hub.Queue(["Typeset", MathJax.Hub]);
   }
-  
+
   this.renderFileAttachment = function(approachId, attachment, numberOfApproach) {
     // var icon = host + "/de.deepamehta.files/images/sheet.png"
     var img = host + "/filerepo/uebungen/" + attachment.value
@@ -432,7 +436,7 @@ var cView = new function () {
               if (approach.composite["tub.eduzen.approach_sample"].value) {
                 cView.currentSampleSolution = approach
                 return true
-              } 
+              }
             }
           }
         }
@@ -455,11 +459,11 @@ var cView = new function () {
     }}
     var savedComment = dmc.create_topic(newComment)
     if (savedComment == undefined) throw new Error("Something mad happened.")
-    var commentApproachModel = { "type_uri":"dm4.core.composition", 
+    var commentApproachModel = { "type_uri":"dm4.core.composition",
       "role_1":{"topic_id":approach.id, "role_type_uri":"dm4.core.whole"},
       "role_2":{"topic_id":savedComment.id, "role_type_uri":"dm4.core.part"}
     }
-    var authorModel = { "type_uri":"tub.eduzen.author", 
+    var authorModel = { "type_uri":"tub.eduzen.author",
       "role_1":{"topic_id":savedComment.id, "role_type_uri":"dm4.core.default"},
       "role_2":{"topic_id":user.identity.id, "role_type_uri":"dm4.core.default"}
     }
@@ -542,7 +546,7 @@ var cView = new function () {
   }
 
   this.getFileContent = function (topicId) {
-    var files = dmc.get_topic_related_topics(topicId, {"others_topic_type_uri": "dm4.files.file", 
+    var files = dmc.get_topic_related_topics(topicId, {"others_topic_type_uri": "dm4.files.file",
       "assoc_type_uri": "tub.eduzen.content_item"})
     return (files.total_count > 0) ? files.items : undefined
   }

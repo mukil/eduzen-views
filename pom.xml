@@ -13,7 +13,7 @@
     <parent>
         <groupId>de.deepamehta</groupId>
         <artifactId>deepamehta-parent</artifactId>
-        <version>3</version>
+        <version>4</version>
         <relativePath>../deepamehta/deepamehta-parent/pom.xml</relativePath>
     </parent>
 
@@ -21,12 +21,12 @@
         <dependency>                                 <!-- depend on the DeepaMehta core module.     -->
             <groupId>de.deepamehta</groupId>         <!-- Copy this declaration as is.              -->
             <artifactId>deepamehta-core</artifactId> <!-- Just update the version number, if a      -->
-            <version>4.0.12-SNAPSHOT</version>       <!-- newer version of DeepaMehta is available. -->
+            <version>4.0.13-SNAPSHOT</version>       <!-- newer version of DeepaMehta is available. -->
         </dependency>                                <!-- If your plugin has no Java code at all,   -->
         <dependency>                                 <!-- depend on the DeepaMehta core module.     -->
             <groupId>de.deepamehta</groupId>         <!-- Copy this declaration as is.              -->
             <artifactId>deepamehta-webservice</artifactId> <!-- Just update the version number, if a-->
-            <version>4.0.12</version>       	     <!-- newer version of DeepaMehta is available. -->
+            <version>4.0.13-SNAPSHOT</version>       <!-- newer version of DeepaMehta is available. -->
         </dependency>                                <!-- If your plugin has no Java code at all,   -->
         <!--dependency>
             <groupId>de.tu-berlin.eduzen</groupId>
