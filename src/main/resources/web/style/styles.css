@@ -337,8 +337,25 @@
 
 /** Beginning of old Stylesheet **/
 
-/** Overriding View & Layout Definitions **/
+/** CKEditor related styles **/
 
+section {
+    border: 1px solid #cfcfcf;
+    padding: 10px;
+    margin-right: 40px;
+}
+
+.MathJax_Display {
+    text-align: left !important;
+}
+
+.math-output {
+    border: 1px dashed #333;
+    background: #cfcfcf;
+    padding-left: 10px;
+}
+
+/** Overriding View & Layout Definitions **/
 
 body.eduzen {
     margin: 0px;

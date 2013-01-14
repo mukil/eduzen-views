@@ -1,4 +1,4 @@
-/** 
+/**
  * A prototype to list contents of a Lehrveranstaltung and Excercises.
  **/
 
@@ -35,6 +35,8 @@ var aView = new function () {
   // personal state of an excercise-text can be
   // "tub.eduzen.approach_undecided" | "tub.eduzen.approach_correct" | "tub.eduzen.approach_wrong" | "new"
   this.eTextState = {"uri": "new"}
+  this.userInput = "" // CKEditor data-body container
+
 
 
   /** Main Approach View initialization controler **/
@@ -66,14 +68,14 @@ var aView = new function () {
         } else if (commands[6] === "new") {
           console.log("  load new excercise-view for => " + excerciseTextId)
           subView = "new"
-        } else if (commands[6] === "sample") {
+        }else if (commands[6] === "sample") {
           console.log("  load sample exercise-view for => " + excerciseTextId)
           subView = "sample"
         } else if (commands[6] === "history") {
           subView = "history"
           console.log("  load exercise-history-view for => " + excerciseTextId)
         } else if (commands[6] === "submitted") {
-          subView = "submitted" // virtual state to prevent refreshing accidentially the new page 
+          subView = "submitted" // virtual state to prevent refreshing accidentially the new page
         }
       }
       if (!aView.currentLectureId) throw new Error("No current Lecture was set. Try to log out and log in again.")
@@ -120,7 +122,7 @@ var aView = new function () {
             // append subView
             if (subViewId === "sample") {
               // render "complete sample solution with get exercise button"
-              if (aView.hasSampleSolution) { 
+              if (aView.hasSampleSolution) {
                 aView.renderSampleSolutionForExcerciseText()
                 // render page with somekind of "now its your turn"-button
               }
@@ -233,7 +235,7 @@ var aView = new function () {
   this.renderExcerciseTextTakeOn = function () {
     // Status der Aufgabenstellung nur rendern, wenn es schon eine &Uuml;bung dazu gibt.
     aView.renderExcerciseTextDescription()
-    // 
+    //
     // add "assemble exercise" button
     $("#content").append("<br/><a class=\"button takeon\" href=\"javascript:aView.handleNewExcercise()\" alt=\""
       + " Aufgabenstellung annehmen\" title=\"Aufgabenstellung annehmen\">Aufgabenstellung annehmen</a><br/><br/>")
@@ -277,25 +279,30 @@ var aView = new function () {
 
   this.renderApproachForm = function  () {
     var uploadPath = "/"
-    // ### 
+    // ###
     var submissionLabel = "<label for=\"excercise-input\">Bitte trage deinen L&ouml;sungsansatz oder "
       + "deine Frage an die Tutoren in das Eingabefeld ein:<br/></label><br/>"
-  
-    var submission = "<form name=\"approach-submission\" action=\"javascript:aView.submitApproachToExcercise()\">"
+
+    var submission = "<section id=\"input\" contenteditable=\"true\"></section><br/>"
+      + "<form name=\"approach-submission\" action=\"javascript:aView.submitApproachToExcercise()\">"
+      /**
       + "<textarea type=\"text\" name=\"excercise-input\" rows=\"4\" size=\"120\"></textarea><br/>"
       + "<b class=\"label preview\" style=\"display: none;\">Vorschau</b><br/><div id=\"math-preview\" class=\"math\">"
       + "</div><br/>"
       + "<b class=\"label\">Hinweis: Zwischen zwei \"$\"-Zeichen kannst Du hier auch direkt mit <a alt=\"Hilfeseite: "
       + "Alphabetical list of supported TeX Commands\" title=\"Hilfeseite: Alphabetical list of supported "
       + "TeX Commands\" href=\"http://www.onemathematicalcat.org/MathJaxDocumentation/TeXSyntax.htm\">$\\rm{TeX}$</a>"
-      + " arbeiten.</b><br/><br/><span class=\"label upload\">Alternativ kannst du auch ein Foto deiner "
+      + " arbeiten.</b>" **/
+      + "<br/><span class=\"label upload\">Alternativ kannst du auch ein Foto deiner "
       + "handschriftlichen, aber bitte leserlichen Berechnungen abgeben. Lade dazu Bitte eine Bild-Datei(JPG, PNG, GIF)"
-      + "&nbsp;&nbsp<a class=\"button upload\" href=\"#\" alt=\"Bild hochladen\ title=\"Bild hochladen\">hier hoch</a>."
+      + "&nbsp;&nbsp<a class=\"button upload\" href=\"#\" alt=\"Bild hochladen\" title=\"Bild hochladen\">hier hoch</a>."
       + "</span><br/><br/><input type=\"submit\" value=\"Absenden\" class=\"button submit\"></input>"
       + "</form>"
     $("#content").append(submissionLabel).append(submission)
     $(".button.upload").click(aView.open_upload_dialog(uploadPath, aView.handleUploadResponse))
-    
+
+    // setup cK-editor
+    CKEDITOR.inline( document.getElementById( 'input' ) );
     // mathjax preview handling
     $input = $("[name=excercise-input]")
     $(".label.preview").show()
@@ -309,7 +316,8 @@ var aView = new function () {
 
   this.renderApproachMathPreview = function(value) {
     $("#math-preview").text(value)
-    MathJax.Hub.Queue(["Typeset", MathJax.Hub]);
+    MathJax.Hub.Queue(["Typeset", MathJax.Hub])
+    // $("#math-preview").html("<img src=\"http://latex.codecogs.com/gif.latex?"+ value +"\" alt=\""+ value +"\">")
   }
 
   this.renderExcerciseObject = function (eObject) {
@@ -341,9 +349,9 @@ var aView = new function () {
     $("#content").html("<p class\"buffer\"><b class=\"label\">Dein L&ouml;sungsvorschlag f&uuml;r die "
       + "Aufgabenstellung \"" + aView.currentExcerciseText.value + "\" haben wir nun im System abgespeichert.</b></p>")
     .append("<p class\"buffer\"><b class=\"label\">Du kannst jetzt z.B.:</b><ul class=\"options\">"
-      + "<li><a class=\"btn option\" href=\"" + host + "/eduzen/view/lecture/" + aView.currentLectureId 
+      + "<li><a class=\"btn option\" href=\"" + host + "/eduzen/view/lecture/" + aView.currentLectureId
         + "/topicalarea/" + aView.currentTopicalarea.id + "\">"
-        + "weitere Aufgabenstellungen aus dem Themenkomplex \"" + aView.currentTopicalarea.value 
+        + "weitere Aufgabenstellungen aus dem Themenkomplex \"" + aView.currentTopicalarea.value
         + "\" ansehen,</a></li>"
         + "<li><a class=\"btn option\" href=\"" + host + "/eduzen/view/start\">"
         + "einen Blick in andere Themenkomplexe deiner Lehrveranstaltung werfen</a></li>"
@@ -360,7 +368,7 @@ var aView = new function () {
 
     if (aView.hasSampleSolution) {
       overview += "Du kannst dir eine <a class=\"btn option sample\" href=\""+ aView.getExcerciseTextUrl() + "/sample\">"
-        + "Beispielaufgabe mit Musterl&ouml;sung ansehen</a><br/><br/>" 
+        + "Beispielaufgabe mit Musterl&ouml;sung ansehen</a><br/><br/>"
     } else  {
       overview += "Wir haben leider noch keine beispielhafte L&ouml;sung f&uuml;r diese Aufgabenstellung.<br/><br/>"
     }
@@ -427,7 +435,7 @@ var aView = new function () {
   this.renderExcerciseHistoryForUser = function () {
     var e_text_state = aView.getExcerciseTextState(aView.currentExcerciseText.id).status
     // Content Header
-    $("#content").html("<br/><b class=\"label history\">Historie</b> Du hast bisher "+ aView.allExcercises.length 
+    $("#content").html("<br/><b class=\"label history\">Historie</b> Du hast bisher "+ aView.allExcercises.length
       + " &Uuml;bung/en zu dieser Aufgabenstellung bearbeitet.&nbsp;&nbsp;&nbsp;"
       + "<b class=\"label\">Aufgabenstellung</b>&nbsp;<b class=\"history state\">"
       + dict.stateName(e_text_state) +"</b>")
@@ -447,7 +455,7 @@ var aView = new function () {
         var dateString = time.toLocaleDateString() + ", um " + time.getHours() + ":" + time.getMinutes() + " Uhr"
         var state = aView.getExerciseState(excercise.id).excercise_state
         var nrOfApproaches = excercise.composite["tub.eduzen.approach"].length
-        listItem = "<li class=\"taken-excercise\">" 
+        listItem = "<li class=\"taken-excercise\">"
             + "<span class=\"name\" id=\""+ excercise.id +"\"><a id=\"a-"+ excercise.id +"\" "
             + "href=\"javascript:void(0);\">"+ dateString +"</a></span><br/><span class=\"count\">"+ nrOfApproaches
             +"&nbsp;Versuch/e</span><span class=\"state\">Status der &Uuml;bung: "+ dict.stateName(state) +"</span>"
@@ -489,7 +497,7 @@ var aView = new function () {
       return function (e) {
         // aView.currentExcercise = excercise
         // aView.renderExcerciseApproachInfo()
-        var excerciseLink = aView.currentExcerciseText.id 
+        var excerciseLink = aView.currentExcerciseText.id
         window.location.href = aView.getExcerciseTextUrl() + "/excercise/"+ excercise.id // rel. without slash at start
         return function(e){}
       }
@@ -497,7 +505,7 @@ var aView = new function () {
 
   }
 
-  /** 
+  /**
     * Rendering all tries for any given excercise-text and our current user
     * TODO: remove duplicated code from #approach_view.renderExcerciseInfo
     */
@@ -622,10 +630,10 @@ var aView = new function () {
     $(".approach-"+ numberOfApproach + " .content").append(fileSrc)
   }
 
-  /** 
-   * Controler to take on an excercise with an approach 
+  /**
+   * Controler to take on an excercise with an approach
    * Input:  TUB-Identity, Excercise Text, Excercise Object, Approach Value, File, Timestamp
-   * Output: TUB-Identity <author> Excercise (<composedof> Excercise Text AND <composedof> Excercise Object) 
+   * Output: TUB-Identity <author> Excercise (<composedof> Excercise Text AND <composedof> Excercise Object)
    *         <aggregate> Approach Composite :which_can_haz: <content_item> File
    **/
 
@@ -633,13 +641,14 @@ var aView = new function () {
     // render "Submitting .. "
     $(".button.submit").append("<b class=\"label\">Submitting ...</b>")
     // 1) submission: create + relate approach to that excercise
-    var submittedValue = $("[name=excercise-input]").val()
+    // var submittedValue = $("[name=excercise-input]").val()
+    var submittedValue = aView.getTeXAndHTMLSource(document.getElementById("input"))
     var approach = aView.createApproachForExcercise(submittedValue) // along with excercise-object, if necessary
     if (!approach) throw new Error("Approach could not be submitted. Something went wrong.")
     // 2) submission: attach a possibly submitted file-upload to this appraoch
     if (aView.currentFileApproach != undefined) {
       // and relate the just uploaded file-topic to our approach
-      var approachFilemodel = { "type_uri":"tub.eduzen.content_item", 
+      var approachFilemodel = {"type_uri":"tub.eduzen.content_item",
         "role_1":{"topic_id":approach.id, "role_type_uri":"dm4.core.whole"},
         "role_2":{"topic_id":aView.currentFileApproach.topic_id, "role_type_uri":"dm4.core.part"}
       }
@@ -649,18 +658,18 @@ var aView = new function () {
     // approach to excercise was submitted, render options
     aView.renderOptionsAfterSubmission()
     // push state, coming from subView "/new"
-    aView.pushHistory({"command": "submitted"}, "EducationZEN - Übung für "+ aView.currentExcerciseText.value 
+    aView.pushHistory({"command": "submitted"}, "EducationZEN - Übung für "+ aView.currentExcerciseText.value
       + "eingereicht", aView.getExcerciseTextUrl() + "/submitted")
     // ## render time take for excercise
   }
 
   this.createExcerciseForUser = function () {
-    // 1) create Excercise, relate it to excerciseTextId and relate it to userId 
+    // 1) create Excercise, relate it to excerciseTextId and relate it to userId
     var eText = aView.currentExcerciseText
     if (user.identity == undefined) throw new Error("Your User-Account has no TUB-Identity. Cannot take excercises.")
     if (eText == undefined) throw new Error("Something mad happened. Please try again.")
     // FIXME: set current time user has taken this excercise on server or never
-    var exerciseModel = { "type_uri": "tub.eduzen.excercise", "composite": {
+    var exerciseModel = {"type_uri": "tub.eduzen.excercise", "composite": {
         "tub.eduzen.timeframe_note": new Date().getTime().toString()
     }}
     var excercise = dmc.create_topic(exerciseModel)
@@ -669,12 +678,12 @@ var aView = new function () {
 
     // update client side model, there is a new object
     aView.currentExcercise = excercise
-    var excerciseTextModel = { "type_uri":"dm4.core.aggregation", 
+    var excerciseTextModel = {"type_uri":"dm4.core.aggregation",
       "role_1":{"topic_id":excercise.id, "role_type_uri":"dm4.core.whole"},
       "role_2":{"topic_id":eText.id, "role_type_uri":"dm4.core.part"}
     }
     // 2) persist current excercise-object of our freshly assembled excercise
-    var eObjectModel = { "type_uri":"dm4.core.aggregation",
+    var eObjectModel = {"type_uri":"dm4.core.aggregation",
       "role_1":{"topic_id":aView.currentExcercise.id, "role_type_uri":"dm4.core.whole"},
       "role_2":{"topic_id":aView.currentExcerciseObject.id, "role_type_uri":"dm4.core.part"}
     }
@@ -682,7 +691,7 @@ var aView = new function () {
     console.log("dEBUG: saved excercise-objects => "
       + aView.currentExcerciseObject.id + " to current excercise => " + aView.currentExcercise.id)
     // 3) relate author to it as submitter
-    var authorModel = { "type_uri":"tub.eduzen.submitter", 
+    var authorModel = {"type_uri":"tub.eduzen.submitter",
       "role_1":{"topic_id":user.identity.id, "role_type_uri":"dm4.core.default"},
       "role_2":{"topic_id":excercise.id, "role_type_uri":"dm4.core.default"}
     }
@@ -692,7 +701,7 @@ var aView = new function () {
   }
 
   this.createApproachForExcercise = function (value) {
-    var approachModel = { "type_uri": "tub.eduzen.approach", "composite": {
+    var approachModel = {"type_uri": "tub.eduzen.approach", "composite": {
         "tub.eduzen.approach_content": value,
         "tub.eduzen.timeframe_note": new Date().getTime().toString(),
         "tub.eduzen.approach_correctness": "ref_uri:tub.eduzen.approach_undecided",
@@ -700,7 +709,7 @@ var aView = new function () {
     }}
     var approach = dmc.create_topic(approachModel)
     if (approach == undefined || aView.currentExcercise == undefined) throw new Error("Something mad happened.")
-    var approachExcercisemodel = { "type_uri":"dm4.core.composition", 
+    var approachExcercisemodel = {"type_uri":"dm4.core.composition",
       "role_1":{"topic_id":aView.currentExcercise.id, "role_type_uri":"dm4.core.whole"},
       "role_2":{"topic_id":approach.id, "role_type_uri":"dm4.core.part"}
     }
@@ -801,14 +810,14 @@ var aView = new function () {
             }
           }
         }
-        // 
+        //
         aView.allExcercises = usersExcercisesForExcerciseText
       }
     }
   }
 
   this.loadWebResourcesForExerciseText = function (eTextId) {
-    var web_resources = dmc.get_topic_related_topics(eTextId, 
+    var web_resources = dmc.get_topic_related_topics(eTextId,
       {"others_topic_type_uri": "dm4.webbrowser.web_resource", "assoc_type_uri": "tub.eduzen.content_item"})
     return (web_resources.total_count > 0) ? web_resources.items : undefined
   }
@@ -819,17 +828,17 @@ var aView = new function () {
     // ### FIXME: recheck for still-existing user
     console.log(" do comment this approiach wiht " + value)
     // ### FIXME: strip input to API.. ;)
-    var newComment = { "type_uri": "tub.eduzen.comment", "composite": {
+    var newComment = {"type_uri": "tub.eduzen.comment", "composite": {
         "tub.eduzen.comment_correct": isCorrect,
         "tub.eduzen.comment_explanation": value
     }}
     var savedComment = dmc.create_topic(newComment)
     if (savedComment == undefined) throw new Error("Something mad happened.")
-    var commentApproachModel = { "type_uri":"dm4.core.composition", 
+    var commentApproachModel = {"type_uri":"dm4.core.composition",
       "role_1":{"topic_id":approach.id, "role_type_uri":"dm4.core.whole"},
       "role_2":{"topic_id":savedComment.id, "role_type_uri":"dm4.core.part"}
     }
-    var authorModel = { "type_uri":"tub.eduzen.author", 
+    var authorModel = {"type_uri":"tub.eduzen.author",
       "role_1":{"topic_id":savedComment.id, "role_type_uri":"dm4.core.default"},
       "role_2":{"topic_id":user.user.id, "role_type_uri":"dm4.core.default"}
     }
@@ -856,7 +865,7 @@ var aView = new function () {
               if (approach.composite["tub.eduzen.approach_sample"].value) { // evaluates to true, thanks to the editors
                 aView.sampleExercise = excercise
                 return true
-              } 
+              }
             }
           }
         }
@@ -875,7 +884,7 @@ var aView = new function () {
   }
 
   this.getAuthorOfComment = function (commentId) {
-    // FIXME: Ientity 
+    // FIXME: Ientity
     return dmc.get_topic_related_topics(commentId,
       {"others_topic_type_uri": "tub.eduzen.identity", "assoc_type_uri": "tub.eduzen.author"})
   }
@@ -890,7 +899,7 @@ var aView = new function () {
 
   this.getAllExcercisesByUser = function () {
     if (user.identity == undefined) throw new Error("Your User Account has now TUB Identity, so no submitted approaches.")
-    var excercises = dmc.get_topic_related_topics(user.identity.id, {"others_topic_type_uri": "tub.eduzen.excercise", 
+    var excercises = dmc.get_topic_related_topics(user.identity.id, {"others_topic_type_uri": "tub.eduzen.excercise",
       "assoc_type_uri": "tub.eduzen.submitter"})
     return (excercises.total_count > 0) ? excercises.items : undefined
   }
@@ -901,13 +910,13 @@ var aView = new function () {
   }
 
   this.getFileContent = function (topicId) {
-    var files = dmc.get_topic_related_topics(topicId, {"others_topic_type_uri": "dm4.files.file", 
+    var files = dmc.get_topic_related_topics(topicId, {"others_topic_type_uri": "dm4.files.file",
       "assoc_type_uri": "tub.eduzen.content_item"})
     return (files.total_count > 0) ? files.items : undefined
   }
 
   this.getCompatibleExerciseObjects = function (excerciseTextId) {
-    var objects = dmc.get_topic_related_topics(excerciseTextId, {"others_topic_type_uri": "tub.eduzen.excercise_object", 
+    var objects = dmc.get_topic_related_topics(excerciseTextId, {"others_topic_type_uri": "tub.eduzen.excercise_object",
       "assoc_type_uri": "tub.eduzen.compatible"})
     return (objects.total_count > 0) ? objects.items : undefined
   }
@@ -989,21 +998,56 @@ var aView = new function () {
     MathJax.Hub.Config({
         "extensions": ["tex2jax.js", "mml2jax.js", "MathEvents.js", "MathZoom.js", "MathMenu.js", "toMathML.js",
            "TeX/noErrors.js","TeX/noUndefined.js","TeX/AMSmath.js","TeX/AMSsymbols.js", "FontWarnings.js"],
-        "jax": ["input/TeX", "output/SVG"], // "input/MathML", "output/HTML-CSS", "output/NativeMML"
-        "tex2jax": { "inlineMath": [["$","$"],["\\(","\\)"]] },
+        "jax": ["input/TeX", "output/HTML-CSS"], // "input/MathML", "output/SVG", "output/HTML-CSS", "output/NativeMML"
+        "tex2jax": {"inlineMath": [["$","$"],["\\(","\\)"]]},
         "menuSettings": {
-            "zoom": "Double-Click", "mpContext": true, "mpMouse": true, "zscale": "200%", "texHints": true
+            "mpContext": true, "mpMouse": true, "zscale": "200%", "texHints": true
         },
         "errorSettings": {
             "message": ["[Math Error]"]
         },
         "displayAlign": "left",
-        "SVG": { "blacker": 8, "scale": 110 },
+        "SVG": {"blacker": 8, "scale": 110},
         "v1.0-compatible": false,
         "skipStartupTypeset": false,
         "elements": ["content", "header"]
     });
     MathJax.Hub.Configured() // bootstrap mathjax.js lib now
+  }
+
+  this.getTeXAndHTMLSource = function (body) {
+        var objects = $('.math-output', body)
+        for (i=0; i < objects.length; i++) {
+            var div = objects[i]
+            var containerId = div.id
+            var mathjaxId = $('script', div).attr('id')
+            // console.log("containerId: " + containerId + " mathjaxId: " + mathjaxId)
+            // var math = getInputSourceById(MathJax.Hub.getAllJax("MathDiv"), mathjaxId)
+            var math = $("#" + mathjaxId, body).text()
+            if ( math ) {
+                // put latexSource into div-preview container before saving this data
+                $('#'+ containerId, body).html('<span class=\"math-preview\">$$ '+ math + ' $$</span>')
+            } else {
+                console.log("Not found.. ")
+                // ### prevent dialog from opening up
+            }
+        }
+        // var data = $("" + body.innerHTML + "") // copy raw-data of ck-editor
+        // console.log(data)
+        // MathJax.Hub.Typeset() // typeset ck-editor again
+        return body.innerHTML
+
+        // duplicate helperfunction in mathjax/dialogs/mathjax.js
+        function getInputSourceById(id, body) {
+            return $("#" + id, body).value
+            /** for (obj in elements) {
+                var element = elements[obj]
+                console.log("element.inputID: " + element.inputID + " == " + id)
+                if (element.inputID === id) return element
+            }**/
+            // return undefined
+        }
+
   }
 
 }
