@@ -21,12 +21,12 @@
         <dependency>                                 <!-- depend on the DeepaMehta core module.     -->
             <groupId>de.deepamehta</groupId>         <!-- Copy this declaration as is.              -->
             <artifactId>deepamehta-core</artifactId> <!-- Just update the version number, if a      -->
-            <version>4.0.14</version>                <!-- newer version of DeepaMehta is available. -->
+            <version>4.1-SNAPSHOT</version>	     <!-- newer version of DeepaMehta is available. -->
         </dependency>                                <!-- If your plugin has no Java code at all,   -->
         <dependency>                                 <!-- depend on the DeepaMehta core module.     -->
             <groupId>de.deepamehta</groupId>         <!-- Copy this declaration as is.              -->
             <artifactId>deepamehta-webservice</artifactId> <!-- Just update the version number, if a-->
-            <version>4.0.14</version>       	     <!-- newer version of DeepaMehta is available. -->
+            <version>4.1-SNAPSHOT</version>          <!-- newer version of DeepaMehta is available. -->
         </dependency>                                <!-- If your plugin has no Java code at all,   -->
 	<!--is not yet deployed/published in a maven repository -->
 	<!--dependency>				     

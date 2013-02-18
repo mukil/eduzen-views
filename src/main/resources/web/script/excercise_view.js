@@ -1,4 +1,4 @@
-/** 
+/**
  * A prototype to list contents of a Lehrveranstaltung and Excercises.
  **/
 
@@ -51,7 +51,7 @@ var eView = new function () {
     eView.renderHeader()
     eView.setupMathJaxRenderer()
     // authentication check, if user is really participating in lecture (?)
-    if (lectureId != undefined) {
+    if (lectureId != undefined) { // not given during view-initialization...
       // user is logged in, check if part of this lecture, and show it
       user.loadLecturesParticipating()
       if (!eView.isParticipantOfLecture(lectureId)) {
@@ -60,7 +60,7 @@ var eView = new function () {
       }
       eView.currentLecture = dmc.get_topic_by_id(lectureId, true)
       if (eView.currentLecture != undefined) {
-        eView.renderHeader()
+        // eView.renderHeader() spares us about three requests for each initialization of topical-area view
         eView.renderLecture()
         if (topicalareaId != undefined) {
           // ### FIXME: check access if topicalarea is really part of this lecture
@@ -85,7 +85,7 @@ var eView = new function () {
       user.loadLecturesParticipating()
       if (user.lectures != undefined) {
         // eView.renderParticipatingLectures
-        eView.initLectureView(user.lectures[0].id)
+        eView.initLectureView(user.lectures[0].id) // this provokes doubled loading of user-data..
       } else {
         if (user.user != undefined) {
         console.log(user.user)
@@ -159,7 +159,7 @@ var eView = new function () {
 
   this.renderLecture = function () {
     var courseName = eView.getNameOfCourse(eView.currentLecture.id).items[0].value
-    $(".title p.buffer").append("Hier findest du &Uuml;bungen zu deiner" 
+    $(".title p.buffer").append("Hier findest du &Uuml;bungen zu deiner"
       + " Lehrveranstaltung <a href=\"/eduzen/view/lecture/" + eView.currentLecture.id
       + "\" class=\"lecturename\">"+ courseName +" / "+ eView.currentLecture.value +"</a>")
   }
@@ -257,13 +257,13 @@ var eView = new function () {
   /** Methods to access eduzen and accesscontrol REST-Services **/
 
   this.loadTopicalAreasByLV = function(id) {
-    var topicalareas = dmc.get_topic_related_topics(id, {"others_topic_type_uri": "tub.eduzen.topicalarea", 
+    var topicalareas = dmc.get_topic_related_topics(id, {"others_topic_type_uri": "tub.eduzen.topicalarea",
       "assoc_type_uri": "tub.eduzen.lecture_content"})
     return (topicalareas.total_count > 0) ? topicalareas.items : undefined
   }
 
   this.loadWebResourcesForTopicalarea = function (topicalAreaId) {
-    var web_resources = dmc.get_topic_related_topics(topicalAreaId, 
+    var web_resources = dmc.get_topic_related_topics(topicalAreaId,
       {"others_topic_type_uri": "dm4.webbrowser.web_resource", "assoc_type_uri": "tub.eduzen.content_item"})
     return (web_resources.total_count > 0) ? web_resources.items : undefined
   }
@@ -271,9 +271,9 @@ var eView = new function () {
   this.loadExcerciseTextsForTopicalarea = function () {
     // load association between lecture and topicalarea
     // FIXME: an ET could be many times lecture_content? as soon as we support multiple-lectures
-    var contentAssociation = dmc.get_association("tub.eduzen.lecture_content", 
+    var contentAssociation = dmc.get_association("tub.eduzen.lecture_content",
       eView.currentLecture.id, eView.currentTopicalarea.id, "dm4.core.default", "dm4.core.default", true)
-    var excercise_texts = dmc.get_association_related_topics(contentAssociation.id, 
+    var excercise_texts = dmc.get_association_related_topics(contentAssociation.id,
       { "others_topic_type_uri": "tub.eduzen.excercise_text" }).items
 
     if (excercise_texts.length > 1) {
@@ -314,22 +314,22 @@ var eView = new function () {
     if (eView.insertDummyContents) {
       console.log("\"" + user.user.value + "\" is creating associations per script to connect"
         + " excercise_texts with lecture_content_* associations")
-      // ### TKs LVI-Edge Elementare Funktionen: 429031 
+      // ### TKs LVI-Edge Elementare Funktionen: 429031
       // TKs LVI-Edge Eigenschaften stetiger Funktionen: 431380
       // TKs LVI-Edge Zusammengesetze Funktionen: 431128
       // TKs LVI-Edge Symmetrie: 431795
       // ET Vektoralgebra: 80859
       // ET Algebraische und Transzendente Funktionen: 43103
       // ET Skizzieren des Graphen: 21422
-      var assocModel1 = { "type_uri":"tub.eduzen.lecture_content_excercise", 
+      var assocModel1 = { "type_uri":"tub.eduzen.lecture_content_excercise",
         "role_1":{"assoc_id":431795,"role_type_uri":"dm4.core.default"},
         "role_2":{"topic_id":80859,"role_type_uri":"dm4.core.default"}
       }
-      var assocModel2 = { "type_uri":"tub.eduzen.lecture_content_excercise", 
+      var assocModel2 = { "type_uri":"tub.eduzen.lecture_content_excercise",
         "role_1":{"assoc_id":431795,"role_type_uri":"dm4.core.default"},
         "role_2":{"topic_id":43103,"role_type_uri":"dm4.core.default"}
       }
-      var assocModel3 = { "type_uri":"tub.eduzen.lecture_content_excercise", 
+      var assocModel3 = { "type_uri":"tub.eduzen.lecture_content_excercise",
         "role_1":{"assoc_id":431795,"role_type_uri":"dm4.core.default"},
         "role_2":{"topic_id":21422,"role_type_uri":"dm4.core.default"}
       }
@@ -340,7 +340,7 @@ var eView = new function () {
       // TKs LVI-Edge Leibnizsche Regel: 431296
       // TKs LVI-Edge Kartesische Koordinaten: 431879
       // ET Komplexe Zahlen: 292971
-      var assocModel4 = { "type_uri":"tub.eduzen.lecture_content_excercise", 
+      var assocModel4 = { "type_uri":"tub.eduzen.lecture_content_excercise",
         "role_1":{"assoc_id":431879,"role_type_uri":"dm4.core.default"},
         "role_2":{"topic_id":292971,"role_type_uri":"dm4.core.default"}
       }

@@ -415,7 +415,7 @@ var cView = new function () {
       for (element in workspaces.items) {
         var workspace = workspaces.items[element]
         console.log("checking.. " + workspace.uri)
-        if (workspace.uri === "tub.eduzen.workspace_editors") return true
+        if (workspace.uri === "de.workspaces.deepamehta") return true // default workspace uri changed with 4.0.14
       }
     }
   }

@@ -1,5 +1,5 @@
 function user() {
-    
+
     var self = this
 
     var host = ""
@@ -17,22 +17,24 @@ function user() {
     /** The RESTClient-methods to deal with a user **/
 
     this.loadUserAccount = function () {
-        self.account = dmc.get_topic_related_topics(self.user.id, 
+        self.account = dmc.get_topic_related_topics(self.user.id,
             {"others_topic_type_uri": "dm4.accesscontrol.user_account"})
         self.account = dmc.get_topic_by_id(self.account.items[0].id, true)
         return self.account
     }
 
     this.loadUserIdentity = function() {
-        self.identity = dmc.get_topic_related_topics(self.user.id, 
+        self.identity = dmc.get_topic_related_topics(self.user.id,
             {"others_topic_type_uri": "tub.eduzen.identity"})
-        self.identity = dmc.get_topic_by_id(self.identity.items[0].id, true)
+        // self.identity = dmc.get_topic_by_id(self.identity.items[0].id, true)
+        self.identity.id = self.identity.items[0].id // needed from all other modules to start from identity directly
+        self.identity.value = self.identity.items[0].value // keeping an identities full name once its loaded
         return self.identity
     }
 
     this.loadLecturesParticipating = function () {
         if (user.identity == undefined) return undefined
-        var lectures = dmc.get_topic_related_topics(user.identity.id, {"others_topic_type_uri": "tub.eduzen.lecture", 
+        var lectures = dmc.get_topic_related_topics(user.identity.id, {"others_topic_type_uri": "tub.eduzen.lecture",
             "assoc_type_uri": "tub.eduzen.participant"})
         if (lectures.total_count > 0) user.lectures = lectures.items
     }
@@ -110,7 +112,7 @@ function user() {
             show_message("Nutzername oder Passwort ist falsch.", "failed")
             console.log("Access denied.")
         }
-        
+
         if (user.getCurrentUser()) {
             self.clearHeader()
             self.view.initViews()
