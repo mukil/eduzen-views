@@ -532,8 +532,8 @@ var aView = new function () {
     var excerciseDescription = excerciseText.composite["tub.eduzen.excercise_description"]
     var excerciseObject = excercise.composite["tub.eduzen.excercise_object"]
     var e_text_state = aView.getExcerciseTextState(excerciseText.id).status
-    // Page Header
-    aView.renderHeader("excercise")
+    // Page Header do not render header again (just useful after a comment via ajax, to reload header + content area)
+    // aView.renderHeader("excercise") commenting spares us about 3 requests per view initialization
     // Page Body
     $("#content").html("<b class=\"label\">Aufgabenstellung</b><br/>" + excerciseDescription.value +"<br/><br/>")
     $("#content").append("<b class=\"label\">Aufgabe</b><br/>" + excerciseObject.value +"<br/><br/>")
@@ -615,6 +615,7 @@ var aView = new function () {
     aView.renderMathInContentArea()
   }
 
+  /** unused in user view, no commenting should be allowed atm.. */
   this.renderCommentFormForApproach = function(approach, numberOfApproach) {
     $("#new-comment").remove()
     var form = "<div id=\"new-comment\"><b class=\"label\">Inhalt deines Kommentars</b>"
