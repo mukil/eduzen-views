@@ -281,7 +281,7 @@ var aView = new function () {
     var uploadPath = "/"
     // ###
     var submissionLabel = "<label for=\"excercise-input\">Bitte trage deinen L&ouml;sungsansatz oder "
-      + "deine Frage an die Tutoren in das Eingabefeld ein:<br/></label><br/>"
+      + "deine Frage an die Tutoren in das Eingabefeld ein:<br/></label><br/><br/><br/>"
 
     var submission = "<section id=\"input\" contenteditable=\"true\"></section><br/>"
       + "<form name=\"approach-submission\" action=\"javascript:aView.submitApproachToExcercise()\">"
@@ -300,6 +300,23 @@ var aView = new function () {
       + "</form>"
     $("#content").append(submissionLabel).append(submission)
     $(".button.upload").click(aView.open_upload_dialog(uploadPath, aView.handleUploadResponse))
+
+    /** debuggin <svg>-editing with a mathjax-dialog
+    CKEDITOR.on('instancecreated', function (e) {
+        console.log("instance created, registering double click handler... on ")
+        e.editor.on( 'doubleclick', function( evt ) {
+            console.log(evt)
+            var element = evt.data.element.getAscendant( 'svg', true );
+            console.log(element)
+            if ( !element.isReadOnly() ) {
+                if ( element.is( 'svg' ) ) {
+                    // e.editor.getSelection().selectElement(element)
+                    // console.log(element);
+                    e.editor.execCommand('mathjaxDialog');
+                }
+            }
+        })
+    }); **/
 
     // setup cK-editor
     CKEDITOR.inline( document.getElementById( 'input' ) );
@@ -998,7 +1015,7 @@ var aView = new function () {
     MathJax.Hub.Config({
         "extensions": ["tex2jax.js", "mml2jax.js", "MathEvents.js", "MathZoom.js", "MathMenu.js", "toMathML.js",
            "TeX/noErrors.js","TeX/noUndefined.js","TeX/AMSmath.js","TeX/AMSsymbols.js", "FontWarnings.js"],
-        "jax": ["input/TeX", "output/HTML-CSS"], // "input/MathML", "output/SVG", "output/HTML-CSS", "output/NativeMML"
+        "jax": ["input/TeX", "output/SVG"], // "input/MathML", "output/HTML-CSS", "output/NativeMML"
         "tex2jax": {"inlineMath": [["$","$"],["\\(","\\)"]]},
         "menuSettings": {
             "mpContext": true, "mpMouse": true, "zscale": "200%", "texHints": true
@@ -1007,6 +1024,7 @@ var aView = new function () {
             "message": ["[Math Error]"]
         },
         "displayAlign": "left",
+        "HTML-CSS": { "scale": 120 },
         "SVG": {"blacker": 8, "scale": 110},
         "v1.0-compatible": false,
         "skipStartupTypeset": false,
