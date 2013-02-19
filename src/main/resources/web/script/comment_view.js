@@ -139,8 +139,9 @@ var cView = new function () {
   }
 
   this.renderMenu = function () {
-    $("#menu").html("<a class=\"new\" href=\""+ host +"/eduzen/view/commenting/new\">Neue &Uuml;bungen</a>"
-      + "<a class=\"inprogress\" href=\""+ host +"/eduzen/view/commenting/inprogress\">wartend auf Kommentar</a>"
+    /** "<a class=\"new\" href=\""+ host +"/eduzen/view/commenting/new\">Neue &Uuml;bungen</a>" **/
+    $("#menu").html("<a class=\"inprogress\" href=\""+ host +"/eduzen/view/commenting/inprogress\">"
+      + "wartend auf Kommentar</a>"
       + "<a class=\"unapproached\" href=\""+ host +"/eduzen/view/commenting/unapproached\">ohne L&ouml;sungsversuch</a>"
       + "<a class=\"all\" href=\""+ host +"/eduzen/view/commenting/all\">Alle &Uuml;bungen</a>")
   }
