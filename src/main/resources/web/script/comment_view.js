@@ -461,8 +461,8 @@ var cView = new function () {
     var savedComment = dmc.create_topic(newComment)
     if (savedComment == undefined) throw new Error("Something mad happened.")
     var commentApproachModel = { "type_uri":"dm4.core.composition",
-      "role_1":{"topic_id":approach.id, "role_type_uri":"dm4.core.whole"},
-      "role_2":{"topic_id":savedComment.id, "role_type_uri":"dm4.core.part"}
+      "role_1":{"topic_id":approach.id, "role_type_uri":"dm4.core.parent"},
+      "role_2":{"topic_id":savedComment.id, "role_type_uri":"dm4.core.child"}
     }
     var authorModel = { "type_uri":"tub.eduzen.author",
       "role_1":{"topic_id":savedComment.id, "role_type_uri":"dm4.core.default"},

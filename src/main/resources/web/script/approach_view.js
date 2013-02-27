@@ -667,8 +667,8 @@ var aView = new function () {
     if (aView.currentFileApproach != undefined) {
       // and relate the just uploaded file-topic to our approach
       var approachFilemodel = {"type_uri":"tub.eduzen.content_item",
-        "role_1":{"topic_id":approach.id, "role_type_uri":"dm4.core.whole"},
-        "role_2":{"topic_id":aView.currentFileApproach.topic_id, "role_type_uri":"dm4.core.part"}
+        "role_1":{"topic_id":approach.id, "role_type_uri":"dm4.core.parent"},
+        "role_2":{"topic_id":aView.currentFileApproach.topic_id, "role_type_uri":"dm4.core.child"}
       }
       dmc.create_association(approachFilemodel)
       console.log("deBG: related newly uploaded file to approach via \"tub.eduzen.content_item\"")
@@ -697,13 +697,13 @@ var aView = new function () {
     // update client side model, there is a new object
     aView.currentExcercise = excercise
     var excerciseTextModel = {"type_uri":"dm4.core.aggregation",
-      "role_1":{"topic_id":excercise.id, "role_type_uri":"dm4.core.whole"},
-      "role_2":{"topic_id":eText.id, "role_type_uri":"dm4.core.part"}
+      "role_1":{"topic_id":excercise.id, "role_type_uri":"dm4.core.parent"},
+      "role_2":{"topic_id":eText.id, "role_type_uri":"dm4.core.child"}
     }
     // 2) persist current excercise-object of our freshly assembled excercise
     var eObjectModel = {"type_uri":"dm4.core.aggregation",
-      "role_1":{"topic_id":aView.currentExcercise.id, "role_type_uri":"dm4.core.whole"},
-      "role_2":{"topic_id":aView.currentExcerciseObject.id, "role_type_uri":"dm4.core.part"}
+      "role_1":{"topic_id":aView.currentExcercise.id, "role_type_uri":"dm4.core.parent"},
+      "role_2":{"topic_id":aView.currentExcerciseObject.id, "role_type_uri":"dm4.core.child"}
     }
     dmc.create_association(eObjectModel)
     console.log("dEBUG: saved excercise-objects => "
@@ -728,8 +728,8 @@ var aView = new function () {
     var approach = dmc.create_topic(approachModel)
     if (approach == undefined || aView.currentExcercise == undefined) throw new Error("Something mad happened.")
     var approachExcercisemodel = {"type_uri":"dm4.core.composition",
-      "role_1":{"topic_id":aView.currentExcercise.id, "role_type_uri":"dm4.core.whole"},
-      "role_2":{"topic_id":approach.id, "role_type_uri":"dm4.core.part"}
+      "role_1":{"topic_id":aView.currentExcercise.id, "role_type_uri":"dm4.core.parent"},
+      "role_2":{"topic_id":approach.id, "role_type_uri":"dm4.core.child"}
     }
     dmc.create_association(approachExcercisemodel)
     console.log("dEBUG: saved new approach => " + approach.id + " to current excercise => " + aView.currentExcercise.id)
@@ -853,8 +853,8 @@ var aView = new function () {
     var savedComment = dmc.create_topic(newComment)
     if (savedComment == undefined) throw new Error("Something mad happened.")
     var commentApproachModel = {"type_uri":"dm4.core.composition",
-      "role_1":{"topic_id":approach.id, "role_type_uri":"dm4.core.whole"},
-      "role_2":{"topic_id":savedComment.id, "role_type_uri":"dm4.core.part"}
+      "role_1":{"topic_id":approach.id, "role_type_uri":"dm4.core.parent"},
+      "role_2":{"topic_id":savedComment.id, "role_type_uri":"dm4.core.child"}
     }
     var authorModel = {"type_uri":"tub.eduzen.author",
       "role_1":{"topic_id":savedComment.id, "role_type_uri":"dm4.core.default"},
